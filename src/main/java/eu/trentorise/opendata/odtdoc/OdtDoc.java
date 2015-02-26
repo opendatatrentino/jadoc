@@ -48,6 +48,22 @@ public class OdtDoc {
         return new File(resourcePath);
     }
 
+    private static String relPath(String path, boolean isIndex){
+        if (isIndex){
+            return path;
+        } else {
+            return "../" + path;
+        }
+    }
+   /* 
+    private static String buildPage(String version){
+        
+    }
+    
+    private static String buildIndex(){
+        
+    }*/
+    
     public static void main(String[] args) throws IOException, URISyntaxException {
 
         PegDownProcessor pdp = new PegDownProcessor(
@@ -77,23 +93,25 @@ public class OdtDoc {
         File wikiDir = new File(wikiDirPath);
         File pagesDir = new File(pagesDirPath);
 
-        File outputDir = new File(pagesDir, version);
+        File versionDir = new File(pagesDir, version);
 
-        if (outputDir.exists()) {
+        if (versionDir.exists()) {
             // let's be strict before doing moronic things
             checkArgument(version.length() > 0);
-            if (outputDir.getAbsolutePath().endsWith(version)) {
+            if (versionDir.getAbsolutePath().endsWith(version)) {
                 LOG.info("Found already existing output dir, cleaning it...");
-                FileUtils.deleteDirectory(outputDir);
+                FileUtils.deleteDirectory(versionDir);
             } else {
-                throw new RuntimeException("output path " + outputDir.getAbsolutePath() + " doesn't end with '" + version + "', avoiding cleaning it for safety reasons!");
+                throw new RuntimeException("output path " + versionDir.getAbsolutePath() + " doesn't end with '" + version + "', avoiding cleaning it for safety reasons!");
             }
         }
 
         File prova = new File(wikiDir, "Home.md");
 
-        File outputHtml = new File(outputDir, "index.html");
+        File outputIndex = new File(pagesDir, "index.html");
 
+        boolean copyIndex = true;
+        
         String provaMdString = FileUtils.readFileToString(prova);
         VerbatimSerializer vs = new VerbatimSerializer() {
 
@@ -105,31 +123,41 @@ public class OdtDoc {
 
 	//new LinkRenderer().;
         // https://github.com/opendatatrentino/jackan/blob/master/src/test/java/eu/trentorise/opendata/jackan/test/ckan/TestApp.java
-        URL skeletonFileUrl = OdtDoc.class.getResource("/skeleton.html");
-        if (skeletonFileUrl == null) {
-            throw new RuntimeException("Can't find skeleton html!");
-        }
-        LOG.info("Loading skeleton html: " + skeletonFileUrl.getFile());
-        File skeletonFile = new File(skeletonFileUrl.getFile());
 
-        String skeletonString = FileUtils.readFileToString(skeletonFile);
+        File skeletonFile = findResource("/skeleton.html");
 
-        Jerry skeleton = Jerry.jerry(skeletonString);
-        skeleton.$("title").text(repoTitle);
-        skeleton.$("#odtdoc-content").html(pdp.markdownToHtml(provaMdString));
-        skeleton.$("#odtdoc-repo-title").html(repoTitle);
-
-        FileUtils.write(outputHtml, skeleton.html());
+        String skeletonString = FileUtils.readFileToString(skeletonFile);       
         
-      //  findResource();
-        URL websiteTemplate = OdtDoc.class.getResource("/website-template");
-        if (websiteTemplate == null) {
-            throw new RuntimeException("Can't find website-template dir!");
-        }
-        LOG.log(Level.INFO, "Copying website template dir: {0}", websiteTemplate.getFile());
-        LOG.log(Level.INFO, "        to directory: {0}", pagesDir.getAbsolutePath());
-        File websiteTemplateDir = new File(websiteTemplate.getFile());
+        String skeletonStringFixedPaths;
+        if (copyIndex){
+            skeletonStringFixedPaths = skeletonString;            
+        } else {
+                        // fix paths
+            skeletonStringFixedPaths = skeletonString.replaceAll("src=\"js/", "src=\"../js/")
+                                                     .replaceAll("src=\"img/", "src=\"../img/");
 
+        }
+        
+        Jerry skeleton = Jerry.jerry(skeletonStringFixedPaths);
+        skeleton.$("title").text(repoTitle);
+        skeleton.$("#odtdoc-internal-content").html(pdp.markdownToHtml(provaMdString));
+        skeleton.$("#odtdoc-repo-title").html(repoTitle);
+        skeleton.$("#odtdoc-program-logo").attr("src", relPath("img/" + repoName + "-logo-200px.png", copyIndex));
+        
+        FileUtils.write(outputIndex, skeleton.html());
+                
+        File websiteTemplateDir = findResource("/website-template");
+
+        LOG.log(Level.INFO, "Copying website template dir: {0}", websiteTemplateDir.getAbsolutePath());
+        LOG.log(Level.INFO, "        to directory: {0}", pagesDir.getAbsolutePath());
+        
         FileUtils.copyDirectory(websiteTemplateDir, pagesDir);
+
+        
+        File userdocImgDir = new File(wikiDir, "userdoc\\img");
+        LOG.log(Level.INFO, "Merging userdoc/img dir: {0}", userdocImgDir.getAbsolutePath());
+        LOG.log(Level.INFO, "        in directory: {0}", pagesDir.getAbsolutePath());
+        
+        FileUtils.copyDirectory(userdocImgDir, pagesDir);
     }
 }

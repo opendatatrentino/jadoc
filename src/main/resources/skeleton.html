@@ -24,7 +24,7 @@
                 position: fixed;
                 width: 851px; 
                 height: 100px;
-                background-color: #62BCB3;
+                background-color: #FFFCEF;
                 z-index: 100;
             }
 
@@ -36,10 +36,13 @@
                 overflow: auto;
                 width:700px;  /* 851px - 151px = 550px */
 
-                background-color:#FFFDF5;
+                background-color:#FCFCFC;
             }
 
-
+            #odtdoc-internal-content{
+                padding: 10px;
+            }
+            
             #odtdoc-sidebar {
                 position: fixed;
                 top:100px;
@@ -47,8 +50,12 @@
                 height: 100%;
                 min-height:200px; /* just do simulate content */
                 z-index: 100;
-                background-color:#EFF2FB;
+                background-color:#f5f2ec;
             }                     
+            
+            #odtdoc-internal-sidebar{
+                padding: 10px;
+            }
 
 
             h1 > a,
@@ -69,28 +76,59 @@
             <div id="odtdoc-header">
                 
                 <div style="position:absolute; height:100px; min-width:100%; ">
-                    <img style="padding:10px; width:80px" src="img/odt-doc-logo-200px.png" alt="program logo">
+                    <a href="http://opendatatrentino.github.io/odt-doc/">
+                        <img id="odtdoc-program-logo" style="padding:10px; width:80px" src="img/odtdoc-logo-200px.png" alt="program logo">    
+                    </a>
+                    
                     <span id="odtdoc-repo-title" style="position:absolute; margin-left:5px; top:30px; font-size:24px">ODT DOC</span>
                     
-                    <img style="float:right; padding:10px; width:80px" src="img/odt-logo.png"  alt="odt logo">
+                    <a href="http://dati.trentino.it/en/" target="_blank">
+                        <img style="float:right; padding:10px; width:80px" src="img/odt-logo.png"  alt="odt logo">                        
+                    </a>
                 </div>                
                 
             </div>
-            <div id="odtdoc-content">
-                <p>Dummy Text</p><br /><br /><br />
-                <p>Dummy Text</p><br /><br /><br />
-                <p>Dummy Text</p><br /><br /><br />
-                <p>Dummy Text</p><br /><br /><br />
-                <p>Dummy Text</p><br /><br /><br />
-                <p>Dummy Text</p><br /><br /><br />
-                <p>Dummy Text</p><br /><br /><br />
-                <p>Dummy Text</p><br /><br /><br />
+            
+            <div id="odtdoc-sidebar">
+                <div id="odtdoc-internal-sidebar">
+                    <a href="#header1">Header 1</a><br/>
+                    <a href="#header2">Header 2</a><br/>
+                    <a href="#header3">Header 3</a><br/>
+                    <a href="#header4">Header 4</a><br/>
+                </div>
+                
             </div>
-            <div id="odtdoc-sidebar">Fixed sidebar</div>
+            
+            <div id="odtdoc-content">
+                <div id="odtdoc-internal-content">
+
+                    <h1 id="header1"> Header 1</h1>                    
+                    <p>Dummy Text</p><br /><br /><br />
+                    <p>Dummy Text</p><br /><br /><br />
+                    
+                    <h1 id="header2"> Header 2</h1>                    
+                    <p>Dummy Text</p><br /><br /><br />
+                    <p>Dummy Text</p><br /><br /><br />
+                    <p>Dummy Text</p><br /><br /><br />
+                    <p>Dummy Text</p><br /><br /><br />
+
+                    
+                    <h1 id="header3"> Header 3</h1>                    
+                    <p>Dummy Text</p><br /><br /><br />
+                    <p>Dummy Text</p><br /><br /><br />
+                    <p>Dummy Text</p><br /><br /><br />
+                   
+                    <h1 id="header4"> Header 4</h1>                    
+                    <p>Dummy Text</p><br /><br /><br />
+                    
+                    <p>Dummy Text</p><br /><br /><br />
+                </div>
+            </div>
+
         </div>        
         <script src="js/jquery-1.11.2.min.js"></script>
         <script>
-            // idotic CSS in style doesn't work, so use jquetry instead: 
+            // idotic CSS in style doesn't work, so use jquery instead: 
             // also would like pre code but this will select code and won't work. There aren't selectors for parents
             
             $("pre").css("max-width","700px").css("overflow-x", "auto"); 

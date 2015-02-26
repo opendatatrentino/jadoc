@@ -41,7 +41,7 @@
             #odtdoc-internal-content{
                 padding: 10px;
             }
-            
+
             #odtdoc-sidebar {
                 position: fixed;
                 top:100px;
@@ -51,26 +51,59 @@
                 z-index: 100;
                 background-color:#f5f2ec;
             }                     
-            
+
             #odtdoc-internal-sidebar{
                 padding: 10px;
             }
 
+            #odtdoc-nav-header div {
+                background-color:#ffffff;
+                border-color:lightgray;
+                // border-top-style: solid;
+                // border-left-style: solid;
+                // border-right-style: solid;
+                border-style: solid;
+                border-width: 1px;
+                //border-top-left-radius: 15px;
+                //border-top-right-radius: 15px;
+                border-radius: 5px;
+                margin:8px;
+                padding:5px;
+                display:inline;
+            }
+
+            #odtdoc-nav-header div:hover{
+                background-color:#eee;
+                border-color:lightgray;
+                // border-top-style: solid;
+                // border-left-style: solid;
+                // border-right-style: solid;
+                border-style: solid;
+                border-width: 1px;
+                //border-top-left-radius: 15px;
+                //border-top-right-radius: 15px;
+                border-radius: 5px;
+                margin:8px;
+                padding:5px;
+                display:inline;
+            }                      
+
+            // *****************      Fixes to markdown      *************************
             a:link {
-    text-decoration: none;
-}
+                text-decoration: none;
+            }
 
-a:visited {
-    text-decoration: none;
-}
+            a:visited {
+                text-decoration: none;
+            }
 
-a:hover {
-    text-decoration: underline;
-}
+            a:hover {
+                text-decoration: underline;
+            }
 
-a:active {
-    text-decoration: underline;
-}
+            a:active {
+                text-decoration: underline;
+            }
 
             h1 > a,
             h2 > a,
@@ -81,28 +114,37 @@ a:active {
                 text-decoration: none;
                 color: black;                
             }	
-            
-            
+
+
         </style>	
     </head>
     <body>
         <div id="odtdoc-wrapper">
             <div id="odtdoc-header">
-                
-                <div style="position:absolute; height:100px; min-width:100%; ">
+
+                <div style="position:absolute;  min-height:100px; min-width:100%; ">
                     <a href="http://opendatatrentino.github.io/odt-doc/">
-                        <img id="odtdoc-program-logo" style="padding:10px; width:80px" src="img/odtdoc-logo-200px.png" alt="program logo">    
+                        <img id="odtdoc-program-logo" style="padding:10px; width:80px; height:80px" src="img/odtdoc-logo-200px.png" alt="program logo">    
                     </a>
-                    
+
                     <span id="odtdoc-repo-title" style="position:absolute; margin-left:5px; top:30px; font-size:24px">ODT DOC</span>
-                    
+
                     <a href="http://dati.trentino.it/en/" target="_blank">
                         <img style="float:right; padding:10px; width:80px" src="img/odt-logo.png"  alt="odt logo">                        
                     </a>
+
+                    <div id="odtdoc-nav-header" style="display:inline; position: absolute; bottom: 5px; margin-left:140px; " >
+                        <div >Home </div>
+                        <span style="margin-left:40px">Docs:</span>
+                        <div >latest </div>
+                        <div >0.3.1 </div>
+                        <div style=" margin-left:80px">FAQ </div>
+                        <div >Wiki </div>
+                    </div>                       
                 </div>                
-                
+
             </div>
-            
+
             <div id="odtdoc-sidebar">
                 <div id="odtdoc-internal-sidebar">
                     <a href="#header1">Header 1</a><br/>
@@ -110,43 +152,43 @@ a:active {
                     <a href="#header3">Header 3</a><br/>
                     <a href="#header4">Header 4</a><br/>
                 </div>
-                
+
             </div>
-            
+
             <div id="odtdoc-content">
                 <div id="odtdoc-internal-content">
 
                     <h3 id="header1"> Header 1</h3>                    
                     <p>Dummy Text</p><br /><br /><br />
                     <p>Dummy Text</p><br /><br /><br />
-                    
+
                     <h4 id="subheader234234"> Sub header </h4>  
                     <p>Dummy Text</p><br /><br /><br />
                     <p>Dummy Text</p><br /><br /><br />
-                    
+
                     <h3 id="header2"> Header 2</h3>                    
                     <p>Dummy Text</p><br /><br /><br />
                     <p>Dummy Text</p><br /><br /><br />
                     <p>Dummy Text</p><br /><br /><br />
                     <p>Dummy Text</p><br /><br /><br />
 
-                    
+
                     <h3 id="header3"> Header 3</h3>                    
                     <p>Dummy Text</p><br /><br /><br />
                     <p>Dummy Text</p><br /><br /><br />
                     <p>Dummy Text</p><br /><br /><br />
-                   
+
                     <h3 id="header4"> Header 4</h3>  
                     <p>Dummy Text</p><br /><br /><br />
-                    
+
                     <p>Dummy Text</p><br /><br /><br />
 
                     <h2 id="superheader2454534234"> Super header </h2>  
                     <p>Dummy Text</p><br /><br /><br />
                     <p>Dummy Text</p><br /><br /><br />
-                    
-                    
-                    
+
+
+
                 </div>
             </div>
 
@@ -155,8 +197,8 @@ a:active {
         <script>
             // idotic CSS in style doesn't work, so use jquery instead: 
             // also would like pre code but this will select code and won't work. There aren't selectors for parents
-            
-            $("pre").css("max-width","700px").css("overflow-x", "auto"); 
+
+            $("pre").css("max-width", "700px").css("overflow-x", "auto");
         </script>
     </body>
 </html>

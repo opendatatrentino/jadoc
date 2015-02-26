@@ -1,6 +1,7 @@
 package eu.trentorise.opendata.odtdoc;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -104,17 +105,8 @@ public class OdtDoc {
         }
     }
 
-    /*    
-     private  String buildPage(String version){
-         
-     }
-     */
-    private void buildIndex() {
-        File sourceMdFile = new File(wikiDir, "userdoc\\UserHome.md");
-
-        File outputFile = new File(pagesDir, "index.html");
-
-        boolean copyIndex = true;
+    void buildMd(File sourceMdFile, File outputFile, String prependedPath) {
+        checkNotNull(prependedPath);
 
         String sourceMdString;
         try {
@@ -123,6 +115,10 @@ public class OdtDoc {
             throw new RuntimeException("Couldn't read source md file!", ex);
         }
 
+        String filteredSourceMdString = sourceMdString
+                .replaceAll("#\\{version}", version)
+                .replaceAll("#\\{repoRelease}", repoRelease);
+        
         //new LinkRenderer().;
         // https://github.com/opendatatrentino/jackan/blob/master/src/test/java/eu/trentorise/opendata/jackan/test/ckan/TestApp.java
         File skeletonFile = findResource("/skeleton.html");
@@ -131,24 +127,23 @@ public class OdtDoc {
         try {
             skeletonString = FileUtils.readFileToString(skeletonFile);
         } catch (Exception ex) {
-            throw new RuntimeException("Couldn't read sfeleton file!", ex);
+            throw new RuntimeException("Couldn't read skeleton file!", ex);
         }
 
         String skeletonStringFixedPaths;
-        if (copyIndex) {
-            skeletonStringFixedPaths = skeletonString;
-        } else {
+        if (prependedPath.length() > 0) {
             // fix paths
             skeletonStringFixedPaths = skeletonString.replaceAll("src=\"js/", "src=\"../js/")
                     .replaceAll("src=\"img/", "src=\"../img/");
-
+        } else {
+            skeletonStringFixedPaths = skeletonString;
         }
 
         Jerry skeleton = Jerry.jerry(skeletonStringFixedPaths);
         skeleton.$("title").text(repoTitle);
-        skeleton.$("#odtdoc-internal-content").html(pdp.markdownToHtml(sourceMdString));
+        skeleton.$("#odtdoc-internal-content").html(pdp.markdownToHtml(filteredSourceMdString));
         skeleton.$("#odtdoc-repo-title").html(repoTitle);
-        skeleton.$("#odtdoc-program-logo").attr("src", relPath("img/" + repoName + "-logo-200px.png", copyIndex));
+        skeleton.$("#odtdoc-program-logo").attr("src", prependedPath + "img/" + repoName + "-logo-200px.png");
 
         try {
             FileUtils.write(outputFile, skeleton.html());
@@ -158,9 +153,26 @@ public class OdtDoc {
 
     }
 
+    private void buildIndex() {
+        File sourceMdFile = new File(wikiDir, "userdoc\\UserHome.md");
+
+        File outputFile = new File(pagesDir, "index.html");
+
+        buildMd(sourceMdFile, outputFile, "");
+
+    }
+
     public void generateSite() throws IOException {
 
         buildIndex();
+        
+        DirWalker dirWalker = new DirWalker(new File(wikiDir + "\\userdoc\\x.y.z\\"), new File(pagesDir + "\\" + version), this);
+        
+        dirWalker.process();
+        
+        File sourceMdFile = new File(wikiDir, "userdoc\\x.y.z\\Usage.md");
+        File outputFile = new File(pagesDir, version + "\\usage.html");
+        buildMd(sourceMdFile, outputFile, "../");
 
         File websiteTemplateDir = findResource("/website-template");
 

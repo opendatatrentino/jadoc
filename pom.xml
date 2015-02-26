@@ -37,8 +37,11 @@
 	    <artifactId>jodd-lagarto</artifactId>
 	    <version>3.6.4</version>
 	</dependency>
-	
-  
-        
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.10</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

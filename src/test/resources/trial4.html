@@ -1,20 +1,23 @@
 <!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
 <html>
     <head>
-        <title></title>
+        <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-
             body {
                 margin:0; 
                 padding:0; 
-                background-color:#005576;
             }
 
             #odtdoc-wrapper {
                 margin: 0 auto 0 auto;
-                width:851px;
+                width:701px;
                 min-height:600px;
                 height:auto;
                 background-color:#009900;
@@ -22,9 +25,9 @@
 
             #odtdoc-header {
                 position: fixed;
-                width: 851px; 
+                width: 701px; 
                 height: 100px;
-                background-color: #62BCB3;
+                background-color: #ccc;
                 z-index: 100;
             }
 
@@ -34,9 +37,8 @@
                 top:100px;
                 margin-left:151px;
                 overflow: auto;
-                width:700px;  /* 851px - 151px = 550px */
-
-                background-color:#FFFDF5;
+                width:550px;  /* 701px - 151px = 550px */
+                background-color:#CC9900; 
             }
 
 
@@ -47,35 +49,13 @@
                 height: 100%;
                 min-height:200px; /* just do simulate content */
                 z-index: 100;
-                background-color:#EFF2FB;
-            }                     
-
-
-            h1 > a,
-            h2 > a,
-            h3 > a,
-            h4 > a,
-            h5 > a,
-            h6 > a {
-                text-decoration: none;
-                color: black;                
-            }	
-            
-            
-        </style>	
+                background-color:#96F;
+            }            
+        </style>
     </head>
     <body>
         <div id="odtdoc-wrapper">
-            <div id="odtdoc-header">
-                
-                <div style="position:absolute; height:100px; min-width:100%; ">
-                    <img style="padding:10px; width:80px" src="img/odt-doc-logo-200px.png" alt="program logo">
-                    <span id="odtdoc-repo-title" style="position:absolute; margin-left:5px; top:30px; font-size:24px">ODT DOC</span>
-                    
-                    <img style="float:right; padding:10px; width:80px" src="img/odt-logo.png"  alt="odt logo">
-                </div>                
-                
-            </div>
+            <div id="odtdoc-header">Fixed header</div>
             <div id="odtdoc-content">
                 <p>Dummy Text</p><br /><br /><br />
                 <p>Dummy Text</p><br /><br /><br />
@@ -87,13 +67,6 @@
                 <p>Dummy Text</p><br /><br /><br />
             </div>
             <div id="odtdoc-sidebar">Fixed sidebar</div>
-        </div>        
-        <script src="js/jquery-1.11.2.min.js"></script>
-        <script>
-            // idotic CSS in style doesn't work, so use jquetry instead: 
-            // also would like pre code but this will select code and won't work. There aren't selectors for parents
-            
-            $("pre").css("max-width","700px").css("overflow-x", "auto"); 
-        </script>
+        </div>
     </body>
 </html>

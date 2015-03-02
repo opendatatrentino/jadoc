@@ -288,16 +288,16 @@ public class OdtDoc {
     }
 
     public static void main(String[] args) throws IOException, URISyntaxException {
-
-        String repoName = "odt-commons";
-        String repoTitle = "Odt Commons";
+        
+        String repoName = "odt-doc";
+        String repoTitle = "Odt Doc";
 
         OdtDoc odtDoc = new OdtDoc(
                 repoName,
                 repoTitle,
                 "opendatatrentino",
-                "..\\..\\" + repoName + "\\prj\\docs",
-                "..\\..\\" + repoName + "\\pages",
+                "docs", // todo fixed path!
+                "..\\pages",  // todo fixed path!
                 true
         );
 

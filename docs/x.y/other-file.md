@@ -1,0 +1,6 @@
+<p class="odtdoc-to-strip">
+WARNING: WORK IN PROGRESS - THIS IS ONLY A TEMPLATE FOR THE DOCUMENTATION. <br/>
+RELEASE DOCS ARE ON THE PROJECT WEBSITE
+</p>
+
+This is just a trial

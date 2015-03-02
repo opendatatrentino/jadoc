@@ -9,7 +9,7 @@ This #{version} release is just for testing docs and release system.
 
 This is a custom image for this version: <img src="img/test-img.png">
 
-This is an image for all versions: <img src="../img/odt-commons-logo-200px.png" width="150px">
+This is an image for all versions: <img src="../img/jadoc-logo-200px.png" width="150px">
 
 
 Links without extension:

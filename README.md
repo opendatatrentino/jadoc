@@ -5,7 +5,7 @@ Jadoc is a program to generate documentation for open data in trentino projects.
 
 **Project status**: Developing 0.1.0, see [project issues](https://github.com/opendatatrentino/jadoc/issues)
 
-**Usage**: Project is not published yet, so [usage docs](docs/index.md) are subject to change. 
+**Usage**: Project is not published yet, so [usage docs](docs/x.y/index.md) are subject to change. 
 
 **License**: business-friendly [Apache License v2.0](https://github.com/opendatatrentino/jadoc/blob/master/LICENSE.txt)
 

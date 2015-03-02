@@ -27,10 +27,10 @@ public class DirWalkerException extends RuntimeException {
     public String getMessage() {
         String m = "";
         if (source != null){
-            m += " \n Source file was " + source.getAbsolutePath() + " .";
+            m += " \n Source is " + source.getAbsolutePath() + " .";
         }
         if (destination != null){
-            m += " \n Destination file was " + destination.getAbsolutePath() + " .";
+            m += " \n Destination is " + destination.getAbsolutePath() + " .";
         }
         return super.getMessage() + m; 
     }

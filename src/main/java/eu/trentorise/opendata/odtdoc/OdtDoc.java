@@ -2,14 +2,22 @@ package eu.trentorise.opendata.odtdoc;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static eu.trentorise.opendata.commons.OdtUtils.checkNotEmpty;
+import eu.trentorise.opendata.commons.SemVersion;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.SortedMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.Nullable;
 import jodd.jerry.Jerry;
 import org.apache.commons.io.FileUtils;
+import org.eclipse.egit.github.core.RepositoryTag;
 import org.pegdown.Parser;
 import org.pegdown.PegDownProcessor;
 
@@ -21,18 +29,21 @@ public class OdtDoc {
 
     private static final Logger LOG = Logger.getLogger(OdtDoc.class.getName());
 
-    private String repoName = "jackan";
-    private String repoTitle = "Jackan";
-    private String repoOrganization = "opendatatrentino";
-    private String repoUrl = "https://github.com/" + repoOrganization + "/" + repoName;
-    private String repoMaster = repoUrl + "/blob/master/";
-    private String version = "0.3.1";
-    private String releaseTag = repoName + "-0.3.1";
-    private String repoRelease = repoUrl + "/blob/" + releaseTag + "/";
+    private String repoName;
+    private String repoTitle;
+    private String repoOrganization;
+    private String sourceDocsDirPath;
+    private String pagesDirPath;
+    private boolean local;
+    private File sourceDocsDir;
+    private File pagesDir;
 
-    private String wikiDirPath = "..\\..\\jackan\\wiki"; // todo review
-    private String pagesDirPath = "..\\..\\jackan\\pages"; // todo review
-    //String pagesDirPath = "..\\jackan\\pages"; // todo review
+    /**
+     * Null means they were not fetched. Notice we may also have fetched tags
+     * and discovered there where none, so there might also be an empty array.
+     */
+    @Nullable
+    private List<RepositoryTag> repoTags;
 
     PegDownProcessor pdp = new PegDownProcessor(
             Parser.QUOTES
@@ -45,21 +56,15 @@ public class OdtDoc {
             | Parser.ANCHORLINKS // not supported in netbeans flow 2.0 yet		
     );
 
-    private File wikiDir;
-    private File pagesDir;
-    private File outputVersionDir;
+    private static void deleteOutputVersionDir(File outputVersionDir, int major, int minor) {
 
-    public OdtDoc() {
-
-        wikiDir = new File(wikiDirPath);
-        pagesDir = new File(pagesDirPath);
-
-        outputVersionDir = new File(pagesDir, version);
+        String versionName = "" + major + "." + minor;
 
         if (outputVersionDir.exists()) {
             // let's be strict before doing moronic things
-            checkArgument(version.length() > 0);
-            if (outputVersionDir.getAbsolutePath().endsWith(version)) {
+            checkArgument(major >= 0);
+            checkArgument(minor >= 0);
+            if (outputVersionDir.getAbsolutePath().endsWith(versionName)) {
                 LOG.info("Found already existing output dir, cleaning it...");
                 try {
                     FileUtils.deleteDirectory(outputVersionDir);
@@ -67,9 +72,32 @@ public class OdtDoc {
                     throw new RuntimeException("Error while deleting directory!", ex);
                 }
             } else {
-                throw new RuntimeException("output path " + outputVersionDir.getAbsolutePath() + " doesn't end with '" + version + "', avoiding cleaning it for safety reasons!");
+                throw new RuntimeException("output path " + outputVersionDir.getAbsolutePath() + " doesn't end with '" + versionName + "', avoiding cleaning it for safety reasons!");
             }
         }
+
+    }
+
+    public OdtDoc(String repoName, String repoTitle, String repoOrganization, String sourceDocsDirPath, String pagesDirPath, boolean local) {
+        checkNotEmpty(repoName, "Invalid repository name!");
+        checkNotEmpty(repoTitle, "Invalid repository title!");
+        checkNotEmpty(repoOrganization, "Invalid repository organization!");
+        checkNotEmpty(sourceDocsDirPath, "Invalid repository source docs dir path!");
+        checkNotEmpty(pagesDirPath, "Invalid pages dir path!");
+
+        this.repoName = repoName;
+        this.repoTitle = repoTitle;
+        this.repoOrganization = repoOrganization;
+        this.sourceDocsDirPath = sourceDocsDirPath;
+        this.pagesDirPath = pagesDirPath;
+        this.local = local;
+
+        sourceDocsDir = new File(sourceDocsDirPath);
+        pagesDir = new File(pagesDirPath);
+
+    }
+
+    private OdtDoc() {
     }
 
     /**
@@ -94,18 +122,7 @@ public class OdtDoc {
         return new File(resourcePath);
     }
 
-    /**
-     * Returns the path, eventually prepended with ../ if isIndex is false.
-     */
-    private static String relPath(String path, boolean isIndex) {
-        if (isIndex) {
-            return path;
-        } else {
-            return "../" + path;
-        }
-    }
-
-    void buildMd(File sourceMdFile, File outputFile, String prependedPath) {
+    void buildMd(File sourceMdFile, File outputFile, String prependedPath, SemVersion version) {
         checkNotNull(prependedPath);
 
         String sourceMdString;
@@ -116,11 +133,9 @@ public class OdtDoc {
         }
 
         String filteredSourceMdString = sourceMdString
-                .replaceAll("#\\{version}", version)
-                .replaceAll("#\\{repoRelease}", repoRelease);
-        
-        //new LinkRenderer().;
-        // https://github.com/opendatatrentino/jackan/blob/master/src/test/java/eu/trentorise/opendata/jackan/test/ckan/TestApp.java
+                .replaceAll("#\\{version}", version.toString())
+                .replaceAll("#\\{repoRelease}", OdtDocs.repoRelease(repoOrganization, repoName, version.toString()));
+
         File skeletonFile = findResource("/skeleton.html");
 
         String skeletonString;
@@ -141,10 +156,47 @@ public class OdtDoc {
 
         Jerry skeleton = Jerry.jerry(skeletonStringFixedPaths);
         skeleton.$("title").text(repoTitle);
-        skeleton.$("#odtdoc-internal-content").html(pdp.markdownToHtml(filteredSourceMdString));
+        String contentFromWikiHtml = pdp.markdownToHtml(filteredSourceMdString);
+        skeleton.$("#odtdoc-internal-content").html(contentFromWikiHtml);
         skeleton.$("#odtdoc-repo-title").html(repoTitle);
-        skeleton.$("#odtdoc-program-logo").attr("src", prependedPath + "img/" + repoName + "-logo-200px.png");
 
+        File programLogo = new File(sourceDocsDir, "img\\" + repoName + "-logo-200px.png");
+
+        if (programLogo.exists()) {
+            skeleton.$("#odtdoc-program-logo").attr("src", prependedPath + "img/" + repoName + "-logo-200px.png");
+        } else {
+            skeleton.$("#odtdoc-program-logo").css("display", "none");
+        }
+
+        skeleton.$("#odtdoc-program-logo-link").attr("href", OdtDocs.repoWebsite(repoOrganization, repoName));
+
+        skeleton.$("#odtdoc-wiki").attr("href", OdtDocs.repoWiki(repoOrganization, repoName));
+        skeleton.$("#odtdoc-home").attr("href", OdtDocs.repoWebsite(repoOrganization, repoName));
+
+        // cleaning example versions
+        skeleton.$(".odtdoc-version-tab-header").remove();
+
+        List<RepositoryTag> tags = new ArrayList(OdtDocs.filterTags(repoName, repoTags).values());
+        Collections.reverse(tags);
+        for (RepositoryTag tag : tags) {
+            SemVersion ver = OdtDocs.version(repoName, tag.getName());
+            String verShortName = OdtDocs.majorMinor(ver);
+            skeleton.$("#odtdoc-nav-header").append(
+                    "<a class='odtdoc-version-tab-header' href='"
+                    + prependedPath
+                    + verShortName
+                    + "'>" + verShortName + "</a>");
+        }
+
+        String sidebarString = makeSidebar(contentFromWikiHtml);
+        if (sidebarString.length() > 0) {
+            skeleton.$("#odtdoc-internal-sidebar").html(sidebarString);
+        } else {
+            skeleton.$("#odtdoc-internal-sidebar").text("");
+        }
+
+        skeleton.$(".odtdoc-to-strip").remove();
+        
         try {
             FileUtils.write(outputFile, skeleton.html());
         } catch (Exception ex) {
@@ -153,26 +205,71 @@ public class OdtDoc {
 
     }
 
-    private void buildIndex() {
-        File sourceMdFile = new File(wikiDir, "userdoc\\UserHome.md");
+    private void buildIndex(SemVersion latestVersion) {
+        File sourceMdFile = new File(sourceDocsDir, "index.md");
 
         File outputFile = new File(pagesDir, "index.html");
 
-        buildMd(sourceMdFile, outputFile, "");
+        buildMd(sourceMdFile, outputFile, "", latestVersion);
+    }
+
+    private void processDir(SemVersion semVersion) {
+        checkNotNull(semVersion);
+        
+            // File sourceMdFile = new File(wikiDir, "userdoc\\" + ver.getMajor() + ver.getMinor() + "\\Usage.md");
+        // File outputFile = new File(pagesDir, version + "\\usage.html");
+        // buildMd(sourceMdFile, outputFile, "../");            
+
+        File sourceVersionDir = new File(sourceDocsDir, "x.y");
+
+        if (!sourceVersionDir.exists()) {
+            throw new RuntimeException("Can't find source dir!" + sourceVersionDir.getAbsolutePath());
+        }
+
+        File targetVersionDir = new File(pagesDir, "" + semVersion.getMajor() + "." + semVersion.getMinor());
+
+        deleteOutputVersionDir(targetVersionDir, semVersion.getMajor(), semVersion.getMinor());
+
+        DirWalker dirWalker = new DirWalker(
+                sourceVersionDir,
+                targetVersionDir,
+                this,
+                semVersion
+        );
+        dirWalker.process();
 
     }
 
     public void generateSite() throws IOException {
 
-        buildIndex();
-        
-        DirWalker dirWalker = new DirWalker(new File(wikiDir + "\\userdoc\\x.y.z\\"), new File(pagesDir + "\\" + version), this);
-        
-        dirWalker.process();
-        
-        File sourceMdFile = new File(wikiDir, "userdoc\\x.y.z\\Usage.md");
-        File outputFile = new File(pagesDir, version + "\\usage.html");
-        buildMd(sourceMdFile, outputFile, "../");
+        LOG.log(Level.INFO, "Fetching {0}/{1} tags.", new Object[]{repoOrganization, repoName});
+        repoTags = OdtDocs.fetchTags(repoOrganization, repoName);
+
+        SemVersion latestVersion;
+
+        if (local) {
+            latestVersion = SemVersion.of("0.0.0"); // todo take this from pom
+        } else {
+            latestVersion = OdtDocs.latestVersion(repoName, repoTags);
+        }
+
+        buildIndex(latestVersion);
+
+        if (local) {
+                LOG.log(Level.INFO, "Processing local source");
+                processDir(latestVersion);
+
+        } else {
+            SortedMap<String, RepositoryTag> filteredTags = OdtDocs.filterTags(repoName, repoTags);
+
+            for (RepositoryTag tag : filteredTags.values()) {
+
+                LOG.log(Level.INFO, "Processing release tag {0}", tag.getName());
+                processDir(OdtDocs.version(repoName, tag.getName()));
+
+            }
+
+        }
 
         File websiteTemplateDir = findResource("/website-template");
 
@@ -181,17 +278,43 @@ public class OdtDoc {
 
         FileUtils.copyDirectory(websiteTemplateDir, pagesDir);
 
-        File userdocImgDir = new File(wikiDir, "userdoc\\img");
-        LOG.log(Level.INFO, "Merging userdoc/img dir: {0}", userdocImgDir.getAbsolutePath());
-        LOG.log(Level.INFO, "        in directory: {0}", pagesDir.getAbsolutePath());
+        File userdocImgDir = new File(sourceDocsDir, "img");
+        File targetImgDir = new File(pagesDir, "img");
+        LOG.log(Level.INFO, "Merging img dir: {0}", userdocImgDir.getAbsolutePath());
+        LOG.log(Level.INFO, "        in directory: {0}", targetImgDir.getAbsolutePath());
 
-        FileUtils.copyDirectory(userdocImgDir, pagesDir);
+        FileUtils.copyDirectory(userdocImgDir, targetImgDir);
 
     }
 
     public static void main(String[] args) throws IOException, URISyntaxException {
-        OdtDoc odtDoc = new OdtDoc();
+
+        String repoName = "odt-commons";
+        String repoTitle = "Odt Commons";
+
+        OdtDoc odtDoc = new OdtDoc(
+                repoName,
+                repoTitle,
+                "opendatatrentino",
+                "..\\..\\" + repoName + "\\prj\\docs",
+                "..\\..\\" + repoName + "\\pages",
+                true
+        );
 
         odtDoc.generateSite();
+    }
+
+    private String makeSidebar(String contentFromWikiHtml) {
+        Jerry html = Jerry.jerry(contentFromWikiHtml);
+        String ret = "";
+        for (Jerry sourceHeaderLink : html.$("h3 a")) {
+            // <a href="#header1">Header 1</a><br/>
+
+            ret += "<div> <a href='#" + sourceHeaderLink.attr("id") + "'>" + sourceHeaderLink.text() + "</div> \n";
+            /*Jerry.jerry("<a>")
+             .attr("href","#" + sourceHeaderLink.attr("id"))
+             .text(sourceHeaderLink.text()); */
+        }
+        return ret;
     }
 }

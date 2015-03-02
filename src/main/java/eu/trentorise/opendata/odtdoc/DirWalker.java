@@ -6,6 +6,8 @@
 package eu.trentorise.opendata.odtdoc;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import eu.trentorise.opendata.commons.NotFoundException;
+import eu.trentorise.opendata.commons.SemVersion;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,15 +30,27 @@ public class DirWalker extends DirectoryWalker {
     private File sourceRoot;
     private File destinationRoot;
     private OdtDoc odtDoc;
+    SemVersion version;
 
-    public DirWalker(File sourceRoot, File destinationRoot, OdtDoc odtDoc) {
+    /**
+     * @throws NotFoundException if source root doesn't exists
+     */
+    public DirWalker(File sourceRoot, File destinationRoot, OdtDoc odtDoc, SemVersion version) {
         super();
         checkNotNull(sourceRoot);
+        if (!sourceRoot.exists()) {
+            throw new NotFoundException("source root does not exists: " + sourceRoot.getAbsolutePath());
+        }
         checkNotNull(destinationRoot);
+        if (destinationRoot.exists()) {
+            throw new NotFoundException("destination directory does already exists: " + destinationRoot.getAbsolutePath());
+        }
         checkNotNull(odtDoc);
+        checkNotNull(version);
         this.sourceRoot = sourceRoot;
         this.destinationRoot = destinationRoot;
         this.odtDoc = odtDoc;
+        this.version = version;
     }
 
     public void process() {
@@ -68,14 +82,14 @@ public class DirWalker extends DirectoryWalker {
     protected void handleFile(File file, int depth, Collection results) throws IOException {
 
         String targetRelPath = file.getAbsolutePath().replace(sourceRoot.getAbsolutePath(), "");
-                
-        if (file.getName().endsWith(".md")) {            
-            File target = new File(destinationRoot, targetRelPath.substring(0, targetRelPath.length()-3) + ".html");
+
+        if (file.getName().endsWith(".md")) {
+            File target = new File(destinationRoot, targetRelPath.substring(0, targetRelPath.length() - 3) + ".html");
             if (target.exists()) {
                 throw new DirWalkerException("Target file already exists!", file, target);
             }
             LOG.log(Level.INFO, "Creating file {0}", target.getAbsolutePath());
-            odtDoc.buildMd(file, target, "../");
+            odtDoc.buildMd(file, target, "../", version);
         } else {
             File target = new File(destinationRoot, targetRelPath);
             LOG.log(Level.INFO, "Copying file into {0}", target.getAbsolutePath());
@@ -95,5 +109,9 @@ public class DirWalker extends DirectoryWalker {
     public OdtDoc getOdtDoc() {
         return odtDoc;
     }
+
+    public SemVersion getVersion() {
+        return version;
+    }        
 
 }

@@ -56,8 +56,13 @@
                 padding: 10px;
             }
 
-            #odtdoc-nav-header div {
-                background-color:#ffffff;
+            #odtdoc-internal-sidebar div {
+                margin-top: 10px;
+            }            
+
+            #odtdoc-nav-header a {
+                text-decoration: none;
+                background-color:#fff;
                 border-color:lightgray;
                 // border-top-style: solid;
                 // border-left-style: solid;
@@ -72,7 +77,7 @@
                 display:inline;
             }
 
-            #odtdoc-nav-header div:hover{
+            #odtdoc-nav-header a:hover{
                 background-color:#eee;
                 border-color:lightgray;
                 // border-top-style: solid;
@@ -114,7 +119,10 @@
                 text-decoration: none;
                 color: black;                
             }	
-
+            
+            .odtdoc-to-strip {
+                font-color:red;
+            }
 
         </style>	
     </head>
@@ -123,7 +131,7 @@
             <div id="odtdoc-header">
 
                 <div style="position:absolute;  min-height:100px; min-width:100%; ">
-                    <a href="http://opendatatrentino.github.io/odt-doc/">
+                    <a id="odtdoc-program-logo-link" href="http://opendatatrentino.github.io/odt-doc/">
                         <img id="odtdoc-program-logo" style="padding:10px; width:80px; height:80px" src="img/odtdoc-logo-200px.png" alt="program logo">    
                     </a>
 
@@ -133,24 +141,24 @@
                         <img style="float:right; padding:10px; width:80px" src="img/odt-logo.png"  alt="odt logo">                        
                     </a>
 
-                    <div id="odtdoc-nav-header" style="display:inline; position: absolute; bottom: 5px; margin-left:140px; " >
-                        <div >Home </div>
+                    <div id="odtdoc-nav-header" style="display:inline; position: absolute; bottom: 5px; margin-left:170px; " >
+                        <a id="odtdoc-home" href="https://github.com/opendatatrentino/odt-doc">Home </a>
+                        <a id="odtdoc-wiki" href="https://github.com/opendatatrentino/odt-doc/wiki" target="_blank">Wiki</a> 
                         <span style="margin-left:40px">Docs:</span>
-                        <div >latest </div>
-                        <div >0.3.1 </div>
-                        <div style=" margin-left:80px">FAQ </div>
-                        <div >Wiki </div>
-                    </div>                       
+
+                        <a class="odtdoc-version-tab-header" href="0.4/Usage.html"> 0.4 </a>
+                        <a class="odtdoc-version-tab-header" href="0.3/Usage.html"> 0.3 </a>
+                    </div>
                 </div>                
 
             </div>
 
             <div id="odtdoc-sidebar">
                 <div id="odtdoc-internal-sidebar">
-                    <a href="#header1">Header 1</a><br/>
-                    <a href="#header2">Header 2</a><br/>
-                    <a href="#header3">Header 3</a><br/>
-                    <a href="#header4">Header 4</a><br/>
+                    <div><a href="#header1">Header 1</a></div>
+                    <div><a href="#header2">Header 2</a></div>
+                    <div><a href="#header3">Header 3</a></div>
+                    <div><a href="#header4">Header 4</a></div>
                 </div>
 
             </div>
@@ -194,6 +202,9 @@
 
         </div>        
         <script src="js/jquery-1.11.2.min.js"></script>
+        
+         <!-- quick and silly hack to get the file -->
+        <script src="website-template/js/jquery-1.11.2.min.js"></script>
         <script>
             // idotic CSS in style doesn't work, so use jquery instead: 
             // also would like pre code but this will select code and won't work. There aren't selectors for parents

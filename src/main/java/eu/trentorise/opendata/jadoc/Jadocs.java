@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.trentorise.opendata.odtdoc;
+package eu.trentorise.opendata.jadoc;
 
 import static eu.trentorise.opendata.commons.OdtUtils.checkNotEmpty;
 import eu.trentorise.opendata.commons.SemVersion;
@@ -20,12 +20,12 @@ import org.eclipse.egit.github.core.client.GitHubClient;
 import org.eclipse.egit.github.core.service.RepositoryService;
 
 /**
- * Utilities for OdtDoc
+ * Utilities for Jadoc
  * @author David Leoni
  */
-public class OdtDocs {
+public class Jadocs {
 
-    private static final Logger LOG = Logger.getLogger(OdtDocs.class.getName());
+    private static final Logger LOG = Logger.getLogger(Jadocs.class.getName());
 
     /**
      * Reading file with Jgit:
@@ -62,7 +62,7 @@ public class OdtDocs {
     };
     
     /**
-     * Constructs a SemVersion out of a release tag, like i.e. odt-doc-1.2.3
+     * Constructs a SemVersion out of a release tag, like i.e. jadoc-1.2.3
      */
     public static SemVersion version(String repoName, String releaseTag) {
         String versionString = releaseTag.replace(repoName + "-", "");
@@ -96,7 +96,7 @@ public class OdtDocs {
      * Returns new sorted map of only version tags of the format repoName-x.y.z
      * filtered tags, the latter having the highest version.
      *
-     * @param repoName the github repository name i.e. odt-doc
+     * @param repoName the github repository name i.e. jadoc
      * @param tags a list of tags from the repository
      */
     public static SortedMap<String, RepositoryTag> filterTags(String repoName, List<RepositoryTag> tags) {
@@ -123,9 +123,9 @@ public class OdtDocs {
     
     /**
      * Returns the release tag formed by inserting a minus between the repoName and the version
-     * @param repoName i.e. odt-doc
+     * @param repoName i.e. jadoc
      * @param version i.e. 1.2.3
-     * @return i.e. odt-doc-1.2.3
+     * @return i.e. jadoc-1.2.3
      */
     static public String releaseTag(String repoName, String version){
         return repoName + "-" + version;
@@ -134,8 +134,8 @@ public class OdtDocs {
     /**
      * Returns the github release code url, i.e. 
      * @param organization i.e. opendatatrentino
-     * @param name i.e. odt-doc     
-     * @return i.e. https://github.com/opendatatrentino/odt-doc
+     * @param name i.e. jadoc     
+     * @return i.e. https://github.com/opendatatrentino/jadoc
      */
     static public String repoUrl(String organization, String name){
         return "https://github.com/" + organization + "/" + name;
@@ -143,7 +143,7 @@ public class OdtDocs {
 
     /**
      * Returns the github release code url, i.e. 
-     * @param repoName i.e. odt-doc
+     * @param repoName i.e. jadoc
      * @param version i.e. 1.2.3     
      */
     static public String repoRelease(String organization, String repoName, String version){
@@ -153,7 +153,7 @@ public class OdtDocs {
     /**
      * Returns the github wiki url, i.e. 
      * @param organization i.e. opendatatrentino
-     * @param repoName i.e. odt-doc     
+     * @param repoName i.e. jadoc     
      */
     static public String repoWiki(String organization, String repoName){
         return repoUrl(organization, repoName) + "/wiki";
@@ -162,14 +162,14 @@ public class OdtDocs {
     /**
      * Returns the github wiki url, i.e. 
      * @param organization i.e. opendatatrentino
-     * @param repoName i.e. odt-doc     
+     * @param repoName i.e. jadoc     
      */
     static public String repoWebsite(String organization, String repoName){
         return "https://" + organization + ".github.io/" + repoName;
     }    
     
     static public SemVersion latestVersion(String repoName, List<RepositoryTag> tags){
-        return OdtDocs.version(repoName, OdtDocs.filterTags(repoName, tags).lastKey());
+        return Jadocs.version(repoName, Jadocs.filterTags(repoName, tags).lastKey());
     }
     
 }

@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.trentorise.opendata.odtdoc;
+package eu.trentorise.opendata.jadoc;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import eu.trentorise.opendata.commons.NotFoundException;
@@ -29,13 +29,13 @@ public class DirWalker extends DirectoryWalker {
 
     private File sourceRoot;
     private File destinationRoot;
-    private OdtDoc odtDoc;
+    private Jadoc jadoc;
     SemVersion version;
 
     /**
      * @throws NotFoundException if source root doesn't exists
      */
-    public DirWalker(File sourceRoot, File destinationRoot, OdtDoc odtDoc, SemVersion version) {
+    public DirWalker(File sourceRoot, File destinationRoot, Jadoc jadoc, SemVersion version) {
         super();
         checkNotNull(sourceRoot);
         if (!sourceRoot.exists()) {
@@ -45,11 +45,11 @@ public class DirWalker extends DirectoryWalker {
         if (destinationRoot.exists()) {
             throw new NotFoundException("destination directory does already exists: " + destinationRoot.getAbsolutePath());
         }
-        checkNotNull(odtDoc);
+        checkNotNull(jadoc);
         checkNotNull(version);
         this.sourceRoot = sourceRoot;
         this.destinationRoot = destinationRoot;
-        this.odtDoc = odtDoc;
+        this.jadoc = jadoc;
         this.version = version;
     }
 
@@ -89,7 +89,7 @@ public class DirWalker extends DirectoryWalker {
                 throw new DirWalkerException("Target file already exists!", file, target);
             }
             LOG.log(Level.INFO, "Creating file {0}", target.getAbsolutePath());
-            odtDoc.buildMd(file, target, "../", version);
+            jadoc.buildMd(file, target, "../", version);
         } else {
             File target = new File(destinationRoot, targetRelPath);
             LOG.log(Level.INFO, "Copying file into {0}", target.getAbsolutePath());
@@ -106,8 +106,8 @@ public class DirWalker extends DirectoryWalker {
         return destinationRoot;
     }
 
-    public OdtDoc getOdtDoc() {
-        return odtDoc;
+    public Jadoc getJadoc() {
+        return jadoc;
     }
 
     public SemVersion getVersion() {

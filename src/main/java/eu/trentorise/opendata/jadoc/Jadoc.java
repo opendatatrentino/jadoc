@@ -1,4 +1,4 @@
-package eu.trentorise.opendata.odtdoc;
+package eu.trentorise.opendata.jadoc;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -25,9 +25,9 @@ import org.pegdown.PegDownProcessor;
  *
  * @author David Leoni
  */
-public class OdtDoc {
+public class Jadoc {
 
-    private static final Logger LOG = Logger.getLogger(OdtDoc.class.getName());
+    private static final Logger LOG = Logger.getLogger(Jadoc.class.getName());
 
     private String repoName;
     private String repoTitle;
@@ -78,7 +78,7 @@ public class OdtDoc {
 
     }
 
-    public OdtDoc(String repoName, String repoTitle, String repoOrganization, String sourceDocsDirPath, String pagesDirPath, boolean local) {
+    public Jadoc(String repoName, String repoTitle, String repoOrganization, String sourceDocsDirPath, String pagesDirPath, boolean local) {
         checkNotEmpty(repoName, "Invalid repository name!");
         checkNotEmpty(repoTitle, "Invalid repository title!");
         checkNotEmpty(repoOrganization, "Invalid repository organization!");
@@ -97,7 +97,7 @@ public class OdtDoc {
 
     }
 
-    private OdtDoc() {
+    private Jadoc() {
     }
 
     /**
@@ -113,7 +113,7 @@ public class OdtDoc {
 
         LOG.log(Level.INFO, "Can''t find file {0}", fileFromPath.getAbsolutePath());
 
-        URL resourceUrl = OdtDoc.class.getResource(path);
+        URL resourceUrl = Jadoc.class.getResource(path);
         if (resourceUrl == null) {
             throw new RuntimeException("Can't find path in resources! " + path);
         }
@@ -134,7 +134,7 @@ public class OdtDoc {
 
         String filteredSourceMdString = sourceMdString
                 .replaceAll("#\\{version}", version.toString())
-                .replaceAll("#\\{repoRelease}", OdtDocs.repoRelease(repoOrganization, repoName, version.toString()));
+                .replaceAll("#\\{repoRelease}", Jadocs.repoRelease(repoOrganization, repoName, version.toString()));
 
         File skeletonFile = findResource("/skeleton.html");
 
@@ -157,32 +157,32 @@ public class OdtDoc {
         Jerry skeleton = Jerry.jerry(skeletonStringFixedPaths);
         skeleton.$("title").text(repoTitle);
         String contentFromWikiHtml = pdp.markdownToHtml(filteredSourceMdString);
-        skeleton.$("#odtdoc-internal-content").html(contentFromWikiHtml);
-        skeleton.$("#odtdoc-repo-title").html(repoTitle);
+        skeleton.$("#jadoc-internal-content").html(contentFromWikiHtml);
+        skeleton.$("#jadoc-repo-title").html(repoTitle);
 
         File programLogo = new File(sourceDocsDir, "img\\" + repoName + "-logo-200px.png");
 
         if (programLogo.exists()) {
-            skeleton.$("#odtdoc-program-logo").attr("src", prependedPath + "img/" + repoName + "-logo-200px.png");
+            skeleton.$("#jadoc-program-logo").attr("src", prependedPath + "img/" + repoName + "-logo-200px.png");
         } else {
-            skeleton.$("#odtdoc-program-logo").css("display", "none");
+            skeleton.$("#jadoc-program-logo").css("display", "none");
         }
 
-        skeleton.$("#odtdoc-program-logo-link").attr("href", OdtDocs.repoWebsite(repoOrganization, repoName));
+        skeleton.$("#jadoc-program-logo-link").attr("href", Jadocs.repoWebsite(repoOrganization, repoName));
 
-        skeleton.$("#odtdoc-wiki").attr("href", OdtDocs.repoWiki(repoOrganization, repoName));
-        skeleton.$("#odtdoc-home").attr("href", OdtDocs.repoWebsite(repoOrganization, repoName));
+        skeleton.$("#jadoc-wiki").attr("href", Jadocs.repoWiki(repoOrganization, repoName));
+        skeleton.$("#jadoc-home").attr("href", Jadocs.repoWebsite(repoOrganization, repoName));
 
         // cleaning example versions
-        skeleton.$(".odtdoc-version-tab-header").remove();
+        skeleton.$(".jadoc-version-tab-header").remove();
 
-        List<RepositoryTag> tags = new ArrayList(OdtDocs.filterTags(repoName, repoTags).values());
+        List<RepositoryTag> tags = new ArrayList(Jadocs.filterTags(repoName, repoTags).values());
         Collections.reverse(tags);
         for (RepositoryTag tag : tags) {
-            SemVersion ver = OdtDocs.version(repoName, tag.getName());
-            String verShortName = OdtDocs.majorMinor(ver);
-            skeleton.$("#odtdoc-nav-header").append(
-                    "<a class='odtdoc-version-tab-header' href='"
+            SemVersion ver = Jadocs.version(repoName, tag.getName());
+            String verShortName = Jadocs.majorMinor(ver);
+            skeleton.$("#jadoc-nav-header").append(
+                    "<a class='jadoc-version-tab-header' href='"
                     + prependedPath
                     + verShortName
                     + "'>" + verShortName + "</a>");
@@ -190,12 +190,12 @@ public class OdtDoc {
 
         String sidebarString = makeSidebar(contentFromWikiHtml);
         if (sidebarString.length() > 0) {
-            skeleton.$("#odtdoc-internal-sidebar").html(sidebarString);
+            skeleton.$("#jadoc-internal-sidebar").html(sidebarString);
         } else {
-            skeleton.$("#odtdoc-internal-sidebar").text("");
+            skeleton.$("#jadoc-internal-sidebar").text("");
         }
 
-        skeleton.$(".odtdoc-to-strip").remove();
+        skeleton.$(".jadoc-to-strip").remove();
         
         try {
             FileUtils.write(outputFile, skeleton.html());
@@ -243,14 +243,14 @@ public class OdtDoc {
     public void generateSite() throws IOException {
 
         LOG.log(Level.INFO, "Fetching {0}/{1} tags.", new Object[]{repoOrganization, repoName});
-        repoTags = OdtDocs.fetchTags(repoOrganization, repoName);
+        repoTags = Jadocs.fetchTags(repoOrganization, repoName);
 
         SemVersion latestVersion;
 
         if (local) {
             latestVersion = SemVersion.of("0.0.0"); // todo take this from pom
         } else {
-            latestVersion = OdtDocs.latestVersion(repoName, repoTags);
+            latestVersion = Jadocs.latestVersion(repoName, repoTags);
         }
 
         buildIndex(latestVersion);
@@ -260,12 +260,12 @@ public class OdtDoc {
                 processDir(latestVersion);
 
         } else {
-            SortedMap<String, RepositoryTag> filteredTags = OdtDocs.filterTags(repoName, repoTags);
+            SortedMap<String, RepositoryTag> filteredTags = Jadocs.filterTags(repoName, repoTags);
 
             for (RepositoryTag tag : filteredTags.values()) {
 
                 LOG.log(Level.INFO, "Processing release tag {0}", tag.getName());
-                processDir(OdtDocs.version(repoName, tag.getName()));
+                processDir(Jadocs.version(repoName, tag.getName()));
 
             }
 
@@ -289,10 +289,10 @@ public class OdtDoc {
 
     public static void main(String[] args) throws IOException, URISyntaxException {
         
-        String repoName = "odt-doc";
-        String repoTitle = "Odt Doc";
+        String repoName = "jadoc";
+        String repoTitle = "Jadoc";
 
-        OdtDoc odtDoc = new OdtDoc(
+        Jadoc jadoc = new Jadoc(
                 repoName,
                 repoTitle,
                 "opendatatrentino",
@@ -301,7 +301,7 @@ public class OdtDoc {
                 true
         );
 
-        odtDoc.generateSite();
+        jadoc.generateSite();
     }
 
     private String makeSidebar(String contentFromWikiHtml) {

@@ -1,4 +1,4 @@
-<p class="odtdoc-to-strip">
+<p class="jadoc-to-strip">
 WARNING: WORK IN PROGRESS - THIS IS ONLY A TEMPLATE FOR THE DOCUMENTATION. <br/>
 RELEASE DOCS ARE ON THE PROJECT WEBSITE
 </p>
@@ -22,12 +22,12 @@ Great discovery: links without extension don't work...
 
 ### Usage
 
-Odt Doc is available on Maven Central. To use it, put this in the dependencies section of your _pom.xml_:
+Jadoc is available on Maven Central. To use it, put this in the dependencies section of your _pom.xml_:
 
 ```
     <dependency>
         <groupId>eu.trentorise.opendata</groupId>
-        <artifactId>odt-doc</artifactId>
+        <artifactId>jadoc</artifactId>
         <version>#{version}</version>            
     </dependency>
 ```

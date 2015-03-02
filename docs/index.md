@@ -1,11 +1,11 @@
-<p class="odtdoc-to-strip">
+<p class="jadoc-to-strip">
 WARNING: WORK IN PROGRESS - THIS IS ONLY A TEMPLATE FOR THE DOCUMENTATION. <br/>
 RELEASE DOCS ARE ON THE PROJECT WEBSITE
 </p>
 
 
-Welcome to the Odt Doc website!
+Welcome to the Jadoc website!
 
-Odt doc is a program to generate documentation for open data in trentino projects.
+Jadoc is a program to generate documentation for open data in trentino projects.
 
 

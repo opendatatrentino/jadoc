@@ -14,14 +14,14 @@ Jadoc is a program to generate documentation for open data in trentino projects.
 News
 ------
 
-* 10 March 2015 released this
-* 10 April 2015 released that
+* 10 March 2035 released this
+* 10 April 2025 released that
 * New mailing list
 * whatever.... 
 
 social buttons
 
-**Project status**: [Released #{version}]() on Maven Central and developing 0.3.0, see [project issues](../../issues)
+**Project status**: [Released #{version}]() on Maven Central and developing 10.20.30, see [project issues](../../issues)
 
 **Usage**: Project is not published yet, so [usage docs](docs/index.md) are subject to change. 
 

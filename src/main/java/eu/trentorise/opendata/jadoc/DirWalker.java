@@ -78,20 +78,33 @@ public class DirWalker extends DirectoryWalker {
         return true;
     }
 
+    /**
+     * Converts .md to .html and README.md to index.html . Other files are just
+     * copied
+     */
     @Override
     protected void handleFile(File file, int depth, Collection results) throws IOException {
 
         String targetRelPath = file.getAbsolutePath().replace(sourceRoot.getAbsolutePath(), "");
+        File target = null;
+        if (file.getName().endsWith("README.md")) {
+            target = new File(destinationRoot, "index.html");
+        } else if (file.getName().endsWith(".md")) {
+            target = new File(destinationRoot, targetRelPath.substring(0, targetRelPath.length() - 3) + ".html");
+        }
 
-        if (file.getName().endsWith(".md")) {
-            File target = new File(destinationRoot, targetRelPath.substring(0, targetRelPath.length() - 3) + ".html");
+        if (target != null) {
+            LOG.log(Level.INFO, "Creating file {0}", target.getAbsolutePath());
             if (target.exists()) {
                 throw new DirWalkerException("Target file already exists!", file, target);
             }
-            LOG.log(Level.INFO, "Creating file {0}", target.getAbsolutePath());
             jadoc.buildMd(file, target, "../", version);
         } else {
-            File target = new File(destinationRoot, targetRelPath);
+            target = new File(destinationRoot, targetRelPath);
+            if (target.exists()) {
+                throw new DirWalkerException("Target file already exists!", file, target);
+            }
+
             LOG.log(Level.INFO, "Copying file into {0}", target.getAbsolutePath());
             FileUtils.copyFile(file, target);
         }
@@ -112,6 +125,6 @@ public class DirWalker extends DirectoryWalker {
 
     public SemVersion getVersion() {
         return version;
-    }        
+    }
 
 }

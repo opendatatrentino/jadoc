@@ -304,6 +304,8 @@ public class Jadoc {
 
             FileUtils.copyFile(programLogo, new File(targetImgDir, programLogoName(repoName)));
         }
+        
+        LOG.info("\n\nSite is now browsable at " + pagesDir.getAbsolutePath() + "\n\n");
     }
     
 

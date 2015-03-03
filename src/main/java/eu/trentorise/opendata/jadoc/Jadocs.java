@@ -7,6 +7,7 @@ package eu.trentorise.opendata.jadoc;
 
 import static eu.trentorise.opendata.commons.OdtUtils.checkNotEmpty;
 import eu.trentorise.opendata.commons.SemVersion;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.SortedMap;
@@ -21,6 +22,7 @@ import org.eclipse.egit.github.core.service.RepositoryService;
 
 /**
  * Utilities for Jadoc
+ *
  * @author David Leoni
  */
 public class Jadocs {
@@ -31,7 +33,6 @@ public class Jadocs {
      * Reading file with Jgit:
      * https://github.com/centic9/jgit-cookbook/blob/master/src/main/java/org/dstadler/jgit/api/ReadFileFromCommit.java
      */
-    
     /**
      * Fetches all tags from a github repository. Beware of API limits of 60
      * requests per hour
@@ -57,9 +58,11 @@ public class Jadocs {
     /**
      * Returns major.minor as string
      */
-    public static String majorMinor(SemVersion version){
+    public static String majorMinor(SemVersion version) {
         return version.getMajor() + "." + version.getMinor();
-    };
+    }
+
+    ;
     
     /**
      * Constructs a SemVersion out of a release tag, like i.e. jadoc-1.2.3
@@ -115,63 +118,84 @@ public class Jadocs {
         return map;
     }
 
-        /*
-    private String version = "0.3.1";
-    private String releaseTag = repoName + "-" + version;
-    private String repoRelease = repoUrl + "/blob/" + releaseTag + "/";    
-    */
-    
     /**
-     * Returns the release tag formed by inserting a minus between the repoName and the version
+     * Returns the release tag formed by inserting a minus between the repoName
+     * and the version
+     *
      * @param repoName i.e. jadoc
      * @param version i.e. 1.2.3
      * @return i.e. jadoc-1.2.3
      */
-    static public String releaseTag(String repoName, String version){
+    public static String releaseTag(String repoName, String version) {
         return repoName + "-" + version;
-    }        
-                    
+    }
+
     /**
-     * Returns the github release code url, i.e. 
+     * Returns the github release code url, i.e.
+     *
      * @param organization i.e. opendatatrentino
-     * @param name i.e. jadoc     
+     * @param name i.e. jadoc
      * @return i.e. https://github.com/opendatatrentino/jadoc
      */
-    static public String repoUrl(String organization, String name){
+    public static String repoUrl(String organization, String name) {
         return "https://github.com/" + organization + "/" + name;
-    }      
+    }
 
     /**
-     * Returns the github release code url, i.e. 
+     * Returns the github release code url, i.e. https://github.com/opendatatrentino/jadoc/blob/releaseTag
+     *
      * @param repoName i.e. jadoc
-     * @param version i.e. 1.2.3     
+     * @param version i.e. 1.2.3
      */
-    static public String repoRelease(String organization, String repoName, String version){
-        return repoUrl(organization, repoName)+ "-" + version;
-    }    
+    public static String repoRelease(String organization, String repoName, String version) {
+        return repoUrl(organization, repoName) + "/blob/" + version;
+    }
 
     /**
-     * Returns the github wiki url, i.e. 
+     * Returns the github wiki url, i.e.
+     *
      * @param organization i.e. opendatatrentino
-     * @param repoName i.e. jadoc     
+     * @param repoName i.e. jadoc
      */
-    static public String repoWiki(String organization, String repoName){
+    public static String repoWiki(String organization, String repoName) {
         return repoUrl(organization, repoName) + "/wiki";
-    }    
-
-    /**
-     * Returns the github wiki url, i.e. 
-     * @param organization i.e. opendatatrentino
-     * @param repoName i.e. jadoc     
-     */
-    static public String repoWebsite(String organization, String repoName){
-        return "https://" + organization + ".github.io/" + repoName;
-    }    
-    
-    static public SemVersion latestVersion(String repoName, List<RepositoryTag> tags){
-        return Jadocs.version(repoName, Jadocs.filterTags(repoName, tags).lastKey());
     }
     
-    
-    
+    /**
+     * Returns the github issues url, i.e.
+     *
+     * @param organization i.e. opendatatrentino
+     * @param repoName i.e. jadoc
+     */
+    public static String repoIssues(String organization, String repoName) {
+        return repoUrl(organization, repoName) + "/issues";
+    }    
+
+    /**
+     * Returns the github wiki url, i.e.
+     *
+     * @param organization i.e. opendatatrentino
+     * @param repoName i.e. jadoc
+     */
+    public static String repoWebsite(String organization, String repoName) {
+        return "https://" + organization + ".github.io/" + repoName;
+    }
+
+    public static SemVersion latestVersion(String repoName, List<RepositoryTag> tags) {
+        return Jadocs.version(repoName, Jadocs.filterTags(repoName, tags).lastKey());
+    }
+
+    /**
+     * Returns a new path
+     * @path a path that may contain .md files 
+     */
+    public static String htmlizePath(String path) {
+        if (path.endsWith("README.md")) {
+            return path.replace("README.md", "index.html");
+        } else if (path.endsWith(".md")) {
+            return path.substring(0, path.length() - 3) + ".html";
+        }
+        return path;
+    }
+
 }

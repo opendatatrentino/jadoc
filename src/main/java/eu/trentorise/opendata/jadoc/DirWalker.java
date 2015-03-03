@@ -86,14 +86,10 @@ public class DirWalker extends DirectoryWalker {
     protected void handleFile(File file, int depth, Collection results) throws IOException {
 
         String targetRelPath = file.getAbsolutePath().replace(sourceRoot.getAbsolutePath(), "");
-        File target = null;
-        if (file.getName().endsWith("README.md")) {
-            target = new File(destinationRoot, "index.html");
-        } else if (file.getName().endsWith(".md")) {
-            target = new File(destinationRoot, targetRelPath.substring(0, targetRelPath.length() - 3) + ".html");
-        }
-
-        if (target != null) {
+        File target;
+        
+        if (file.getName().endsWith(".md")) {
+            target = new File(destinationRoot, Jadocs.htmlizePath(targetRelPath));
             LOG.log(Level.INFO, "Creating file {0}", target.getAbsolutePath());
             if (target.exists()) {
                 throw new DirWalkerException("Target file already exists!", file, target);

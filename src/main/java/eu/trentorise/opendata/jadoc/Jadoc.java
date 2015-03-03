@@ -16,6 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import jodd.jerry.Jerry;
+import jodd.jerry.JerryFunction;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.egit.github.core.RepositoryTag;
 import org.pegdown.Parser;
@@ -31,7 +32,7 @@ public class Jadoc {
 
     private String repoName;
     private String repoTitle;
-    private String repoOrganization;    
+    private String repoOrganization;
     private boolean local;
     private File sourceRepoDir;
     private File pagesDir;
@@ -86,13 +87,13 @@ public class Jadoc {
         this.repoName = repoName;
         this.repoTitle = repoTitle;
         this.repoOrganization = repoOrganization;
-        this.sourceRepoDir = new File(sourceRepoDirPath);        
-        this.local = local;        
+        this.sourceRepoDir = new File(sourceRepoDirPath);
+        this.local = local;
         this.pagesDir = new File(pagesDirPath);
 
     }
-    
-    private File sourceDocsDir(){
+
+    private File sourceDocsDir() {
         return new File(sourceRepoDir, "docs");
     }
 
@@ -120,18 +121,16 @@ public class Jadoc {
         LOG.log(Level.INFO, "Found file in {0}", resourcePath);
         return new File(resourcePath);
     }
-    
-    static String programLogoName(String repoName){
+
+    static String programLogoName(String repoName) {
         return repoName + "-logo-200px.png";
     }
-    
-    static File programLogo(File sourceDocsDir, String repoName){
-        return new File(sourceDocsDir, "img\\" + programLogoName(repoName));    
-    }
-    
-    
 
-    void buildMd(File sourceMdFile, File outputFile, String prependedPath, SemVersion version) {
+    static File programLogo(File sourceDocsDir, String repoName) {
+        return new File(sourceDocsDir, "img\\" + programLogoName(repoName));
+    }
+
+    void buildMd(File sourceMdFile, File outputFile, String prependedPath, final SemVersion version) {
         checkNotNull(prependedPath);
 
         String sourceMdString;
@@ -166,7 +165,43 @@ public class Jadoc {
         Jerry skeleton = Jerry.jerry(skeletonStringFixedPaths);
         skeleton.$("title").text(repoTitle);
         String contentFromWikiHtml = pdp.markdownToHtml(filteredSourceMdString);
-        skeleton.$("#jadoc-internal-content").html(contentFromWikiHtml);
+        Jerry contentFromWiki = Jerry.jerry(contentFromWikiHtml);
+        contentFromWiki.$("a")
+                .each(new JerryFunction() {
+
+                    @Override
+                    public boolean onNode(Jerry arg0, int arg1) {
+                        String href = arg0.attr("href");
+                        if (href.startsWith("../../src")) {
+                            arg0.attr("href", href.replace("../../src", Jadocs.repoRelease(repoOrganization, repoName, version.toString()) + "/src"));
+                            return true;
+                        }
+                        if (href.endsWith(".md")) {
+                            arg0.attr("href", Jadocs.htmlizePath(href));
+                            return true;
+                        }
+
+                        if (href.equals("../../wiki")) {
+                            arg0.attr("href", href.replace("../../wiki", Jadocs.repoWiki(repoOrganization, repoName) ));
+                            return true;
+                        }
+                        
+                        if (href.equals("../../issues")) {
+                            arg0.attr("href", href.replace("../../issues", Jadocs.repoIssues(repoOrganization, repoName)));
+                            return true;
+                        }
+                        
+                        if (href.equals("docs")) {
+                            arg0.attr("href", Jadocs.majorMinor(version));
+                            return true;
+                        }
+                        
+                        return true;
+                    }
+                }
+                );
+        skeleton.$("#jadoc-internal-content").html(contentFromWiki.html());
+
         skeleton.$("#jadoc-repo-title").html(repoTitle);
 
         File programLogo = programLogo(sourceDocsDir(), repoName);
@@ -225,7 +260,7 @@ public class Jadoc {
     private void processDir(SemVersion semVersion) {
         checkNotNull(semVersion);
 
-            // File sourceMdFile = new File(wikiDir, "userdoc\\" + ver.getMajor() + ver.getMinor() + "\\Usage.md");
+        // File sourceMdFile = new File(wikiDir, "userdoc\\" + ver.getMajor() + ver.getMinor() + "\\Usage.md");
         // File outputFile = new File(pagesDir, version + "\\usage.html");
         // buildMd(sourceMdFile, outputFile, "../");            
         if (!sourceDocsDir().exists()) {
@@ -294,20 +329,18 @@ public class Jadoc {
 
          FileUtils.copyDirectory(userdocImgDir, targetImgDir);
          */
-        
         File targetImgDir = new File(pagesDir, "img");
-        
+
         File programLogo = programLogo(sourceDocsDir(), repoName);
-        if (programLogo.exists()){
+        if (programLogo.exists()) {
             LOG.log(Level.INFO, "Found program logo: {0}", programLogo.getAbsolutePath());
             LOG.log(Level.INFO, "      copying it into dir {0}", targetImgDir.getAbsolutePath());
 
             FileUtils.copyFile(programLogo, new File(targetImgDir, programLogoName(repoName)));
         }
-        
+
         LOG.info("\n\nSite is now browsable at " + pagesDir.getAbsolutePath() + "\n\n");
     }
-    
 
     public static void main(String[] args) throws IOException, URISyntaxException {
 

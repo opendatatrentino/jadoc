@@ -18,6 +18,11 @@ Links without extension:
 
 Great discovery: links without extension don't work...
 
+Links with extension:
+* link to other md file as markdown: [link](other-file.md)
+* link to other md file as html: <a href="other-file.md">link</a>
+
+Great discovery: links without extension don't work...
 
 
 ### Usage

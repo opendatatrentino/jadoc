@@ -142,7 +142,7 @@ public class Jadocs {
     }
 
     /**
-     * Returns the github release code url, i.e. https://github.com/opendatatrentino/jadoc/blob/releaseTag
+     * Returns the github release code url, i.e. https://github.com/opendatatrentino/jadoc/blob/todo-releaseTag
      *
      * @param repoName i.e. jadoc
      * @param version i.e. 1.2.3
@@ -152,7 +152,7 @@ public class Jadocs {
     }
 
     /**
-     * Returns the github wiki url, i.e.
+     * Returns the github wiki url, i.e. https://github.com/opendatatrentino/jadoc/wiki
      *
      * @param organization i.e. opendatatrentino
      * @param repoName i.e. jadoc
@@ -162,7 +162,7 @@ public class Jadocs {
     }
     
     /**
-     * Returns the github issues url, i.e.
+     * Returns the github issues url, i.e. https://github.com/opendatatrentino/jadoc/issues
      *
      * @param organization i.e. opendatatrentino
      * @param repoName i.e. jadoc
@@ -171,6 +171,16 @@ public class Jadocs {
         return repoUrl(organization, repoName) + "/issues";
     }    
 
+/**
+     * Returns the github milestones url, i.e. https://github.com/opendatatrentino/jadoc/milestones
+     *
+     * @param organization i.e. opendatatrentino
+     * @param repoName i.e. jadoc
+     */
+    public static String repoMilestones(String organization, String repoName) {
+        return repoUrl(organization, repoName) + "/milestones";
+    }    
+    
     /**
      * Returns the github wiki url, i.e.
      *

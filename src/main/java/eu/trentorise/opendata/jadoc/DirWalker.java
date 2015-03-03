@@ -94,7 +94,7 @@ public class DirWalker extends DirectoryWalker {
             if (target.exists()) {
                 throw new DirWalkerException("Target file already exists!", file, target);
             }
-            jadoc.buildMd(file, target, "../", version);
+            jadoc.writeMdAsHtml(file, target, "../", version);
         } else {
             target = new File(destinationRoot, targetRelPath);
             if (target.exists()) {

@@ -2,22 +2,25 @@ package eu.trentorise.opendata.jadoc;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import eu.trentorise.opendata.commons.NotFoundException;
 import static eu.trentorise.opendata.commons.OdtUtils.checkNotEmpty;
 import eu.trentorise.opendata.commons.SemVersion;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.SortedMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import jodd.jerry.Jerry;
 import jodd.jerry.JerryFunction;
 import org.apache.commons.io.FileUtils;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.eclipse.egit.github.core.RepositoryTag;
 import org.pegdown.Parser;
 import org.pegdown.PegDownProcessor;
@@ -36,6 +39,8 @@ public class Jadoc {
     private boolean local;
     private File sourceRepoDir;
     private File pagesDir;
+    
+    private Model pom;
 
     /**
      * Null means they were not fetched. Notice we may also have fetched tags
@@ -44,16 +49,7 @@ public class Jadoc {
     @Nullable
     private List<RepositoryTag> repoTags;
 
-    PegDownProcessor pdp = new PegDownProcessor(
-            Parser.QUOTES
-            | Parser.HARDWRAPS
-            | Parser.AUTOLINKS
-            | Parser.TABLES
-            | Parser.FENCED_CODE_BLOCKS
-            | Parser.WIKILINKS
-            | Parser.STRIKETHROUGH // not supported in netbeans flow 2.0 yet
-            | Parser.ANCHORLINKS // not supported in netbeans flow 2.0 yet		
-    );
+    PegDownProcessor pegDownProcessor;
 
     private static void deleteOutputVersionDir(File outputVersionDir, int major, int minor) {
 
@@ -90,19 +86,28 @@ public class Jadoc {
         this.sourceRepoDir = new File(sourceRepoDirPath);
         this.local = local;
         this.pagesDir = new File(pagesDirPath);
-
+        this.pegDownProcessor = new PegDownProcessor(
+            Parser.QUOTES
+            | Parser.HARDWRAPS
+            | Parser.AUTOLINKS
+            | Parser.TABLES
+            | Parser.FENCED_CODE_BLOCKS
+            | Parser.WIKILINKS
+            | Parser.STRIKETHROUGH // not supported in netbeans flow 2.0 yet
+            | Parser.ANCHORLINKS // not supported in netbeans flow 2.0 yet		
+    );
     }
 
     private File sourceDocsDir() {
         return new File(sourceRepoDir, "docs");
     }
 
-    private Jadoc() {
-    }
-
     /**
-     * First searches in src/main/resources (so it works even when developing),
-     * then in proper classpath resources
+     * Searches file indicated by path first in src/main/resources (so it works
+     * even when developing), then in proper classpath resources. If file is
+     * found it is returned, otherwise an exception is thrown.
+     *
+     * @throws NotFoundException if path can't be found.
      */
     private static File findResource(String path) {
         File fileFromPath = new File("src/main/resources" + path);
@@ -115,7 +120,7 @@ public class Jadoc {
 
         URL resourceUrl = Jadoc.class.getResource(path);
         if (resourceUrl == null) {
-            throw new RuntimeException("Can't find path in resources! " + path);
+            throw new NotFoundException("Can't find path in resources! " + path);
         }
         String resourcePath = resourceUrl.getFile();
         LOG.log(Level.INFO, "Found file in {0}", resourcePath);
@@ -130,7 +135,15 @@ public class Jadoc {
         return new File(sourceDocsDir, "img\\" + programLogoName(repoName));
     }
 
-    void buildMd(File sourceMdFile, File outputFile, String prependedPath, final SemVersion version) {
+    /**
+     * Writes an md file as html to outputFile
+     *
+     * @param outputFile Must not exist.
+     * @param prependedPath the path prepended according to the page position in
+     * the weebsite tree
+     * @param version The version the md page refers to.
+     */
+    void writeMdAsHtml(File sourceMdFile, File outputFile, String prependedPath, final SemVersion version) {
         checkNotNull(prependedPath);
 
         String sourceMdString;
@@ -140,8 +153,9 @@ public class Jadoc {
             throw new RuntimeException("Couldn't read source md file!", ex);
         }
 
-        String filteredSourceMdString = sourceMdString
+        String filteredSourceMdString = sourceMdString                
                 .replaceAll("#\\{version}", version.toString())
+                .replaceAll("#\\{majorMinorVersion}", Jadocs.majorMinor(version))
                 .replaceAll("#\\{repoRelease}", Jadocs.repoRelease(repoOrganization, repoName, version.toString()));
 
         File skeletonFile = findResource("/skeleton.html");
@@ -164,7 +178,7 @@ public class Jadoc {
 
         Jerry skeleton = Jerry.jerry(skeletonStringFixedPaths);
         skeleton.$("title").text(repoTitle);
-        String contentFromWikiHtml = pdp.markdownToHtml(filteredSourceMdString);
+        String contentFromWikiHtml = pegDownProcessor.markdownToHtml(filteredSourceMdString);
         Jerry contentFromWiki = Jerry.jerry(contentFromWikiHtml);
         contentFromWiki.$("a")
                 .each(new JerryFunction() {
@@ -182,20 +196,25 @@ public class Jadoc {
                         }
 
                         if (href.equals("../../wiki")) {
-                            arg0.attr("href", href.replace("../../wiki", Jadocs.repoWiki(repoOrganization, repoName) ));
+                            arg0.attr("href", href.replace("../../wiki", Jadocs.repoWiki(repoOrganization, repoName)));
                             return true;
                         }
-                        
+
                         if (href.equals("../../issues")) {
                             arg0.attr("href", href.replace("../../issues", Jadocs.repoIssues(repoOrganization, repoName)));
                             return true;
                         }
                         
-                        if (href.equals("docs")) {
-                            arg0.attr("href", Jadocs.majorMinor(version));
+                        if (href.equals("../../milestones")) {
+                            arg0.attr("href", href.replace("../../milestones", Jadocs.repoMilestones(repoOrganization, repoName)));
                             return true;
                         }
-                        
+
+                        if (href.equals("docs")) {
+                            arg0.attr("href", Jadocs.majorMinor(version) + "/index.html");
+                            return true;
+                        }
+
                         return true;
                     }
                 }
@@ -212,16 +231,18 @@ public class Jadoc {
             skeleton.$("#jadoc-program-logo").css("display", "none");
         }
 
-        skeleton.$("#jadoc-program-logo-link").attr("href", Jadocs.repoWebsite(repoOrganization, repoName));
+        skeleton.$("#jadoc-program-logo-link").attr("href", prependedPath + "index.html");
 
         skeleton.$("#jadoc-wiki").attr("href", Jadocs.repoWiki(repoOrganization, repoName));
-        skeleton.$("#jadoc-home").attr("href", Jadocs.repoWebsite(repoOrganization, repoName));
+        skeleton.$("#jadoc-home").attr("href", prependedPath + "index.html");
 
         // cleaning example versions
         skeleton.$(".jadoc-version-tab-header").remove();
 
         List<RepositoryTag> tags = new ArrayList(Jadocs.filterTags(repoName, repoTags).values());
         Collections.reverse(tags);
+        
+        
         for (RepositoryTag tag : tags) {
             SemVersion ver = Jadocs.version(repoName, tag.getName());
             String verShortName = Jadocs.majorMinor(ver);
@@ -254,7 +275,7 @@ public class Jadoc {
 
         File outputFile = new File(pagesDir, "index.html");
 
-        buildMd(sourceMdFile, outputFile, "", latestVersion);
+        writeMdAsHtml(sourceMdFile, outputFile, "", latestVersion);
     }
 
     private void processDir(SemVersion semVersion) {
@@ -285,11 +306,18 @@ public class Jadoc {
 
         LOG.log(Level.INFO, "Fetching {0}/{1} tags.", new Object[]{repoOrganization, repoName});
         repoTags = Jadocs.fetchTags(repoOrganization, repoName);
+        MavenXpp3Reader reader = new MavenXpp3Reader();
+        
+        try {
+            pom = reader.read(new FileInputStream("pom.xml"));
+        } catch(Throwable tr){
+            throw new RuntimeException("Error while reading pom!", tr);
+        }
 
         SemVersion latestVersion;
 
         if (local) {
-            latestVersion = SemVersion.of("0.0.0"); // todo take this from pom
+            latestVersion = SemVersion.of(pom.getVersion()).withPreReleaseVersion(""); // todo take this from pom
         } else {
             latestVersion = Jadocs.latestVersion(repoName, repoTags);
         }
@@ -339,6 +367,8 @@ public class Jadoc {
             FileUtils.copyFile(programLogo, new File(targetImgDir, programLogoName(repoName)));
         }
 
+        FileUtils.copyFile(new File(sourceRepoDir, "LICENSE.txt"), new File(pagesDir, "LICENSE.txt"));
+
         LOG.info("\n\nSite is now browsable at " + pagesDir.getAbsolutePath() + "\n\n");
     }
 
@@ -364,8 +394,9 @@ public class Jadoc {
         String ret = "";
         for (Jerry sourceHeaderLink : html.$("h3 a")) {
             // <a href="#header1">Header 1</a><br/>
-
-            ret += "<div> <a href='#" + sourceHeaderLink.attr("id") + "'>" + sourceHeaderLink.text() + "</div> \n";
+            
+            
+            ret += "<div> <a href='"+sourceHeaderLink.first().first().attr("href") + "'>" + sourceHeaderLink.first().text() +  "</a></div> \n";
             /*Jerry.jerry("<a>")
              .attr("href","#" + sourceHeaderLink.attr("id"))
              .text(sourceHeaderLink.text()); */

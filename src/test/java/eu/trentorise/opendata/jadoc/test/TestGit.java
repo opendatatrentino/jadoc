@@ -1,3 +1,5 @@
+package eu.trentorise.opendata.jadoc.test;
+
 import eu.trentorise.opendata.jadoc.Jadocs;
 import java.io.IOException;
 import java.util.List;

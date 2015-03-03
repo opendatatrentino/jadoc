@@ -31,11 +31,9 @@ public class Jadoc {
 
     private String repoName;
     private String repoTitle;
-    private String repoOrganization;
-    private String sourceDocsDirPath;
-    private String pagesDirPath;
+    private String repoOrganization;    
     private boolean local;
-    private File sourceDocsDir;
+    private File sourceRepoDir;
     private File pagesDir;
 
     /**
@@ -78,23 +76,24 @@ public class Jadoc {
 
     }
 
-    public Jadoc(String repoName, String repoTitle, String repoOrganization, String sourceDocsDirPath, String pagesDirPath, boolean local) {
+    public Jadoc(String repoName, String repoTitle, String repoOrganization, String sourceRepoDirPath, String pagesDirPath, boolean local) {
         checkNotEmpty(repoName, "Invalid repository name!");
         checkNotEmpty(repoTitle, "Invalid repository title!");
         checkNotEmpty(repoOrganization, "Invalid repository organization!");
-        checkNotEmpty(sourceDocsDirPath, "Invalid repository source docs dir path!");
-        checkNotEmpty(pagesDirPath, "Invalid pages dir path!");
+        checkNotNull(sourceRepoDirPath, "Invalid repository source docs dir path!");
+        checkNotNull(pagesDirPath, "Invalid pages dir path!");
 
         this.repoName = repoName;
         this.repoTitle = repoTitle;
         this.repoOrganization = repoOrganization;
-        this.sourceDocsDirPath = sourceDocsDirPath;
-        this.pagesDirPath = pagesDirPath;
-        this.local = local;
+        this.sourceRepoDir = new File(sourceRepoDirPath);        
+        this.local = local;        
+        this.pagesDir = new File(pagesDirPath);
 
-        sourceDocsDir = new File(sourceDocsDirPath);
-        pagesDir = new File(pagesDirPath);
-
+    }
+    
+    private File sourceDocsDir(){
+        return new File(sourceRepoDir, "docs");
     }
 
     private Jadoc() {
@@ -121,6 +120,16 @@ public class Jadoc {
         LOG.log(Level.INFO, "Found file in {0}", resourcePath);
         return new File(resourcePath);
     }
+    
+    static String programLogoName(String repoName){
+        return repoName + "-logo-200px.png";
+    }
+    
+    static File programLogo(File sourceDocsDir, String repoName){
+        return new File(sourceDocsDir, "img\\" + programLogoName(repoName));    
+    }
+    
+    
 
     void buildMd(File sourceMdFile, File outputFile, String prependedPath, SemVersion version) {
         checkNotNull(prependedPath);
@@ -160,7 +169,7 @@ public class Jadoc {
         skeleton.$("#jadoc-internal-content").html(contentFromWikiHtml);
         skeleton.$("#jadoc-repo-title").html(repoTitle);
 
-        File programLogo = new File(sourceDocsDir, "img\\" + repoName + "-logo-200px.png");
+        File programLogo = programLogo(sourceDocsDir(), repoName);
 
         if (programLogo.exists()) {
             skeleton.$("#jadoc-program-logo").attr("src", prependedPath + "img/" + repoName + "-logo-200px.png");
@@ -196,7 +205,7 @@ public class Jadoc {
         }
 
         skeleton.$(".jadoc-to-strip").remove();
-        
+
         try {
             FileUtils.write(outputFile, skeleton.html());
         } catch (Exception ex) {
@@ -206,7 +215,7 @@ public class Jadoc {
     }
 
     private void buildIndex(SemVersion latestVersion) {
-        File sourceMdFile = new File(sourceDocsDir, "index.md");
+        File sourceMdFile = new File(sourceRepoDir, "README.md");
 
         File outputFile = new File(pagesDir, "index.html");
 
@@ -215,15 +224,12 @@ public class Jadoc {
 
     private void processDir(SemVersion semVersion) {
         checkNotNull(semVersion);
-        
+
             // File sourceMdFile = new File(wikiDir, "userdoc\\" + ver.getMajor() + ver.getMinor() + "\\Usage.md");
         // File outputFile = new File(pagesDir, version + "\\usage.html");
         // buildMd(sourceMdFile, outputFile, "../");            
-
-        File sourceVersionDir = new File(sourceDocsDir, "x.y");
-
-        if (!sourceVersionDir.exists()) {
-            throw new RuntimeException("Can't find source dir!" + sourceVersionDir.getAbsolutePath());
+        if (!sourceDocsDir().exists()) {
+            throw new RuntimeException("Can't find source dir!" + sourceDocsDir().getAbsolutePath());
         }
 
         File targetVersionDir = new File(pagesDir, "" + semVersion.getMajor() + "." + semVersion.getMinor());
@@ -231,7 +237,7 @@ public class Jadoc {
         deleteOutputVersionDir(targetVersionDir, semVersion.getMajor(), semVersion.getMinor());
 
         DirWalker dirWalker = new DirWalker(
-                sourceVersionDir,
+                sourceDocsDir(),
                 targetVersionDir,
                 this,
                 semVersion
@@ -256,19 +262,21 @@ public class Jadoc {
         buildIndex(latestVersion);
 
         if (local) {
-                LOG.log(Level.INFO, "Processing local source");
-                processDir(latestVersion);
+            LOG.log(Level.INFO, "Processing local source");
+            processDir(latestVersion);
 
         } else {
-            SortedMap<String, RepositoryTag> filteredTags = Jadocs.filterTags(repoName, repoTags);
+            throw new UnsupportedOperationException("Need to better review non local version case!");
+            /*
+             SortedMap<String, RepositoryTag> filteredTags = Jadocs.filterTags(repoName, repoTags);
 
-            for (RepositoryTag tag : filteredTags.values()) {
+             for (RepositoryTag tag : filteredTags.values()) {
 
-                LOG.log(Level.INFO, "Processing release tag {0}", tag.getName());
-                processDir(Jadocs.version(repoName, tag.getName()));
+             LOG.log(Level.INFO, "Processing release tag {0}", tag.getName());
+             processDir(Jadocs.version(repoName, tag.getName()));
 
-            }
-
+             }
+             */
         }
 
         File websiteTemplateDir = findResource("/website-template");
@@ -278,17 +286,29 @@ public class Jadoc {
 
         FileUtils.copyDirectory(websiteTemplateDir, pagesDir);
 
-        File userdocImgDir = new File(sourceDocsDir, "img");
+        /*
+         File userdocImgDir = new File(sourceDocsDir, "img");
+         File targetImgDir = new File(pagesDir, "img");
+         LOG.log(Level.INFO, "Merging img dir: {0}", userdocImgDir.getAbsolutePath());
+         LOG.log(Level.INFO, "        in directory: {0}", targetImgDir.getAbsolutePath());
+
+         FileUtils.copyDirectory(userdocImgDir, targetImgDir);
+         */
+        
         File targetImgDir = new File(pagesDir, "img");
-        LOG.log(Level.INFO, "Merging img dir: {0}", userdocImgDir.getAbsolutePath());
-        LOG.log(Level.INFO, "        in directory: {0}", targetImgDir.getAbsolutePath());
+        
+        File programLogo = programLogo(sourceDocsDir(), repoName);
+        if (programLogo.exists()){
+            LOG.log(Level.INFO, "Found program logo: {0}", programLogo.getAbsolutePath());
+            LOG.log(Level.INFO, "      copying it into dir {0}", targetImgDir.getAbsolutePath());
 
-        FileUtils.copyDirectory(userdocImgDir, targetImgDir);
-
+            FileUtils.copyFile(programLogo, new File(targetImgDir, programLogoName(repoName)));
+        }
     }
+    
 
     public static void main(String[] args) throws IOException, URISyntaxException {
-        
+
         String repoName = "jadoc";
         String repoTitle = "Jadoc";
 
@@ -296,8 +316,8 @@ public class Jadoc {
                 repoName,
                 repoTitle,
                 "opendatatrentino",
-                "docs", // todo fixed path!
-                "..\\pages",  // todo fixed path!
+                ".\\", // todo fixed path!
+                "..\\pages", // todo fixed path!
                 true
         );
 

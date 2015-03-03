@@ -21,7 +21,7 @@ News
 
 social buttons
 
-**Project status**: [Released #{version}]() on Maven Central and developing 0.3.0, see [project issues](https://github.com/opendatatrentino/jadoc/issues)
+**Project status**: [Released #{version}]() on Maven Central and developing 0.3.0, see [project issues](../../issues)
 
 **Usage**: Project is not published yet, so [usage docs](docs/index.md) are subject to change. 
 

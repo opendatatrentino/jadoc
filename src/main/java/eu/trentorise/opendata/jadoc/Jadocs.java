@@ -131,11 +131,10 @@ public class Jadocs {
     }
 
     /**
-     * Returns the github release code url, i.e.
+     * Returns the github repo url, i.e. https://github.com/opendatatrentino/jadoc
      *
      * @param organization i.e. opendatatrentino
-     * @param name i.e. jadoc
-     * @return i.e. https://github.com/opendatatrentino/jadoc
+     * @param name i.e. jadoc     
      */
     public static String repoUrl(String organization, String name) {
         return "https://github.com/" + organization + "/" + name;

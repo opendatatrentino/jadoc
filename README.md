@@ -4,12 +4,12 @@
 Jadoc is a program to generate documentation for open data in trentino projects.
 
 
-**Features**:
+**Features**
 
 * some feature 1
 * some feature 2
 
-**News**:
+**News**
 
 * 10 March 2035 Released [#{version}](#{majorMinorVersion}/README.md)
 * 5 April 2026 released that
@@ -26,6 +26,6 @@ social buttons
 
 **Contributing**: see [the wiki](../../wiki)
 
-**Credits:**
+**Credits**
 
 * David Leoni - DISI at University of Trento - david.leoni@unitn.it

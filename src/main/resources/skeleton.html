@@ -26,6 +26,7 @@
                 height: 100px;
                 background-color: #FFFCEF;
                 z-index: 100;
+                padding-bottom: 5px;
             }
 
 
@@ -60,6 +61,14 @@
                 margin-top: 10px;
             }            
 
+            #jadoc-nav-header {
+                display: inline; 
+                position: absolute; 
+                bottom: 5px; 
+                margin-left:170px;
+                min-width:100%;
+            }
+            
             #jadoc-nav-header a {
                 text-decoration: none;
                 background-color:#fff;
@@ -91,8 +100,35 @@
                 margin:8px;
                 padding:5px;
                 display:inline;
-            }                      
-
+            }    
+            
+            #jadoc-repo-link {
+                position:absolute; 
+                margin-left:5px; 
+                top:30px; 
+                font-size:24px;
+                text-decoration: none;
+            }
+            
+            #jadoc-program-logo {
+                padding:10px; 
+                width:80px; 
+                height:80px                
+            }
+            
+            .jadoc-img-link {
+                
+            }
+            
+            a[href^="http"]:not(.jadoc-image-link):after {
+                 content: " " url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAVklEQVR4Xn3PgQkAMQhDUXfqTu7kTtkpd5RA8AInfArtQ2iRXFWT2QedAfttj2FsPIOE1eCOlEuoWWjgzYaB/IkeGOrxXhqB+uA9Bfcm0lAZuh+YIeAD+cAqSz4kCMUAAAAASUVORK5CYII=);
+            }            
+           
+            a[href^="http"] img { 
+                text-decoration: none;
+                content: none;
+            }
+            
             // *****************      Fixes to markdown      *************************
             a:link {
                 text-decoration: none;
@@ -131,23 +167,29 @@
             <div id="jadoc-header">
 
                 <div style="position:absolute;  min-height:100px; min-width:100%; ">
-                    <a id="jadoc-program-logo-link" href="http://opendatatrentino.github.io/jadoc/">
-                        <img id="jadoc-program-logo" style="padding:10px; width:80px; height:80px" src="img/jadoc-logo-200px.png" alt="program logo">    
+                    <a id="jadoc-program-logo-link" href="index.html">
+                        <img id="jadoc-program-logo" src="img/jadoc-logo-200px.png" alt="program logo">    
                     </a>
 
-                    <span id="jadoc-repo-title" style="position:absolute; margin-left:5px; top:30px; font-size:24px">Jadoc</span>
+                    <a id="jadoc-repo-link" href="http://opendatatrentino.github.io/jadoc/">
+                        Jadoc
+                    </a>
+                    
 
-                    <a href="http://dati.trentino.it/en/" target="_blank">
+                    <a class="jadoc-image-link" href="http://dati.trentino.it/en/" target="_blank">
                         <img style="float:right; padding:10px; width:80px" src="img/odt-logo.png"  alt="jadoc logo">                        
                     </a>
 
-                    <div id="jadoc-nav-header" style="display:inline; position: absolute; bottom: 5px; margin-left:170px; " >
-                        <a id="jadoc-home" href="https://github.com/opendatatrentino/jadoc">Home </a>
-                        <a id="jadoc-wiki" href="https://github.com/opendatatrentino/jadoc/wiki" target="_blank">Wiki</a> 
-                        <span style="margin-left:40px">Docs:</span>
-
-                        <a class="jadoc-version-tab-header" href="0.4/Usage.html"> 0.4 </a>
-                        <a class="jadoc-version-tab-header" href="0.3/Usage.html"> 0.3 </a>
+                    <div id="jadoc-nav-header"  >
+                        <a id="jadoc-home" href="https://github.com/opendatatrentino/jadoc">Home</a>                        
+                        <span id="jadoc-usage" style="margin-left:15px">Usage:                        
+                            <a class="jadoc-version-tab-header" href="0.4/Usage.html"> 0.4 </a>
+                            <a class="jadoc-version-tab-header" href="0.3/Usage.html"> 0.3 </a>
+                        </span>
+                        <span style="margin-left:35px">
+                            <a id="jadoc-project" href="https://github.com/opendatatrentino/jadoc" target="_blank">Repo</a>
+                            <a id="jadoc-wiki" href="https://github.com/opendatatrentino/jadoc/wiki" target="_blank">Wiki</a> 
+                        </span>
                     </div>
                 </div>                
 

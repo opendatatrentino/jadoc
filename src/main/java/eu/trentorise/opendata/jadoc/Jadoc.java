@@ -39,7 +39,7 @@ public class Jadoc {
     private boolean local;
     private File sourceRepoDir;
     private File pagesDir;
-    
+
     private Model pom;
 
     /**
@@ -87,15 +87,15 @@ public class Jadoc {
         this.local = local;
         this.pagesDir = new File(pagesDirPath);
         this.pegDownProcessor = new PegDownProcessor(
-            Parser.QUOTES
-            | Parser.HARDWRAPS
-            | Parser.AUTOLINKS
-            | Parser.TABLES
-            | Parser.FENCED_CODE_BLOCKS
-            | Parser.WIKILINKS
-            | Parser.STRIKETHROUGH // not supported in netbeans flow 2.0 yet
-            | Parser.ANCHORLINKS // not supported in netbeans flow 2.0 yet		
-    );
+                Parser.QUOTES
+                | Parser.HARDWRAPS
+                | Parser.AUTOLINKS
+                | Parser.TABLES
+                | Parser.FENCED_CODE_BLOCKS
+                | Parser.WIKILINKS
+                | Parser.STRIKETHROUGH // not supported in netbeans flow 2.0 yet
+                | Parser.ANCHORLINKS // not supported in netbeans flow 2.0 yet		
+        );
     }
 
     private File sourceDocsDir() {
@@ -153,7 +153,7 @@ public class Jadoc {
             throw new RuntimeException("Couldn't read source md file!", ex);
         }
 
-        String filteredSourceMdString = sourceMdString                
+        String filteredSourceMdString = sourceMdString
                 .replaceAll("#\\{version}", version.toString())
                 .replaceAll("#\\{majorMinorVersion}", Jadocs.majorMinor(version))
                 .replaceAll("#\\{repoRelease}", Jadocs.repoRelease(repoOrganization, repoName, version.toString()));
@@ -204,7 +204,7 @@ public class Jadoc {
                             arg0.attr("href", href.replace("../../issues", Jadocs.repoIssues(repoOrganization, repoName)));
                             return true;
                         }
-                        
+
                         if (href.equals("../../milestones")) {
                             arg0.attr("href", href.replace("../../milestones", Jadocs.repoMilestones(repoOrganization, repoName)));
                             return true;
@@ -221,17 +221,19 @@ public class Jadoc {
                 );
         skeleton.$("#jadoc-internal-content").html(contentFromWiki.html());
 
-        skeleton.$("#jadoc-repo-title").html(repoTitle);
+        skeleton.$("#jadoc-repo-link").html(repoTitle).attr("href", prependedPath + "index.html");
 
         File programLogo = programLogo(sourceDocsDir(), repoName);
 
+        
+        
+        
         if (programLogo.exists()) {
-            skeleton.$("#jadoc-program-logo").attr("src", prependedPath + "img/" + repoName + "-logo-200px.png");
+            skeleton.$("#jadoc-program-logo").attr("src", prependedPath + "img/" + repoName + "-logo-200px.png");            
+            skeleton.$("#jadoc-program-logo-link").attr("href", prependedPath + "index.html");
         } else {
-            skeleton.$("#jadoc-program-logo").css("display", "none");
-        }
-
-        skeleton.$("#jadoc-program-logo-link").attr("href", prependedPath + "index.html");
+            skeleton.$("#jadoc-program-logo-link").css("display", "none");
+        }        
 
         skeleton.$("#jadoc-wiki").attr("href", Jadocs.repoWiki(repoOrganization, repoName));
         skeleton.$("#jadoc-home").attr("href", prependedPath + "index.html");
@@ -241,16 +243,23 @@ public class Jadoc {
 
         List<RepositoryTag> tags = new ArrayList(Jadocs.filterTags(repoName, repoTags).values());
         Collections.reverse(tags);
-        
-        
-        for (RepositoryTag tag : tags) {
-            SemVersion ver = Jadocs.version(repoName, tag.getName());
-            String verShortName = Jadocs.majorMinor(ver);
-            skeleton.$("#jadoc-nav-header").append(
-                    "<a class='jadoc-version-tab-header' href='"
-                    + prependedPath
-                    + verShortName
-                    + "'>" + verShortName + "</a>");
+
+        if (local) {
+            if (tags.size() > 0) {
+                SemVersion ver = Jadocs.version(repoName, tags.get(0).getName());
+                if (version.getMajor() >= ver.getMajor()
+                        && version.getMinor() >= ver.getMinor()) {
+                    addVersionHeaderTag(skeleton, prependedPath, version);
+                }
+
+            } else {
+                addVersionHeaderTag(skeleton, prependedPath, version);
+            }
+        } else {
+            for (RepositoryTag tag : tags) {
+                SemVersion ver = Jadocs.version(repoName, tag.getName());
+                addVersionHeaderTag(skeleton, prependedPath, ver);
+            }
         }
 
         String sidebarString = makeSidebar(contentFromWikiHtml);
@@ -268,6 +277,15 @@ public class Jadoc {
             throw new RuntimeException("Couldn't write into " + outputFile.getAbsolutePath() + "!", ex);
         }
 
+    }
+
+    private static void addVersionHeaderTag(Jerry skeleton, String prependedPath, SemVersion version) {
+        String verShortName = Jadocs.majorMinor(version);
+        skeleton.$("#jadoc-usage").append(
+                "<a class='jadoc-version-tab-header' href='"
+                + prependedPath
+                + verShortName
+                + "/index.html'>" + verShortName + "</a>");
     }
 
     private void buildIndex(SemVersion latestVersion) {
@@ -307,10 +325,10 @@ public class Jadoc {
         LOG.log(Level.INFO, "Fetching {0}/{1} tags.", new Object[]{repoOrganization, repoName});
         repoTags = Jadocs.fetchTags(repoOrganization, repoName);
         MavenXpp3Reader reader = new MavenXpp3Reader();
-        
+
         try {
-            pom = reader.read(new FileInputStream("pom.xml"));
-        } catch(Throwable tr){
+            pom = reader.read(new FileInputStream(new File(sourceRepoDir, "pom.xml")));
+        } catch (Throwable tr) {
             throw new RuntimeException("Error while reading pom!", tr);
         }
 
@@ -374,15 +392,15 @@ public class Jadoc {
 
     public static void main(String[] args) throws IOException, URISyntaxException {
 
-        String repoName = "jadoc";
-        String repoTitle = "Jadoc";
+        String repoName = "traceprov";
+        String repoTitle = "TraceProv";
 
         Jadoc jadoc = new Jadoc(
                 repoName,
                 repoTitle,
                 "opendatatrentino",
-                ".\\", // todo fixed path!
-                "..\\pages", // todo fixed path!
+                "..\\..\\traceprov\\prj", // todo fixed path!
+                "..\\..\\traceprov\\pages", // todo fixed path!
                 true
         );
 
@@ -394,9 +412,8 @@ public class Jadoc {
         String ret = "";
         for (Jerry sourceHeaderLink : html.$("h3 a")) {
             // <a href="#header1">Header 1</a><br/>
-            
-            
-            ret += "<div> <a href='"+sourceHeaderLink.first().first().attr("href") + "'>" + sourceHeaderLink.first().text() +  "</a></div> \n";
+
+            ret += "<div> <a href='" + sourceHeaderLink.first().first().attr("href") + "'>" + sourceHeaderLink.first().text() + "</a></div> \n";
             /*Jerry.jerry("<a>")
              .attr("href","#" + sourceHeaderLink.attr("id"))
              .text(sourceHeaderLink.text()); */

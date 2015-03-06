@@ -10,10 +10,10 @@ It's modeled after this workflow, where you:
 3. edit your markdown files and set relative links between them so they display nice in Github
 4. create a branch named `branch-x.y` (i.e `branch-1.2`)
 5. release your library using <a href="http://semver.org" target="_blank">semantic versioning</a> and tag it with tagname `projectName-x.y.z` (i.e. `jedoc-1.2.3`)
-6. run Jedoc to create a corresponding github website (i.e. http://opendatatrentino.github.io/jedit) out of the docs. 
+6. run Jedoc to create a corresponding github website (i.e. http://opendatatrentino.github.io/jedoc) out of the docs. 
 7. spam the world with links to your new project website
 
-Project wiki is used for information about contributing to the project.
+Project wiki (i.e. [jedoc wiki](../../wiki)) is used for information about contributing to the project.
 
 This way we 
 

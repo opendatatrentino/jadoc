@@ -10,7 +10,7 @@ It's modeled after this workflow, where you:
 3) edit your markdown files and set relative links between them so they display nice in Github
 4) create a branch named `branch-x.y` (i.e `branch-1.2`)
 5) release your library using <a href="http://semver.org" target="_blank">semantic versioning</a> and tag it with tagname `projectName-x.y.z` (i.e. `jedoc-1.2.3`)
-6) run Jedoc to create a corresponding github website (i.e. http://opendatatrentino.github.io/jedit) out of the docs. Links will be changed accordingly.
+6) run Jedoc to create a corresponding github website (i.e. http://opendatatrentino.github.io/jedit) out of the docs. 
 7) spam the world with links to your new project website
 
 Project wiki is used for information about contributing to the project.
@@ -19,8 +19,9 @@ This way we
 
 * fully exploit all the existing editing features of Github
 * reuse version information from git repo and Maven while generating the website
+* let Jedoc perform the tedious tasks like checking versions, fixing links, publishing javadoc, ..
 * evolve documention in separate branches
-    * so if you have to patch something or just improve docs, just work in relative `branch-x.y` and then run Jedoc to publish it.
+    * so if you have to patch something or just improve docs, just work in relative `branch-x.y` and then run Jedoc to publish it (even if it is not released).
     * if you need to add functionality, create new branch named `branch-x.y+1`
 
 

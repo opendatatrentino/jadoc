@@ -171,12 +171,14 @@ public class Jadoc {
         if (prependedPath.length() > 0) {
             // fix paths
             skeletonStringFixedPaths = skeletonString.replaceAll("src=\"js/", "src=\"../js/")
-                    .replaceAll("src=\"img/", "src=\"../img/");
+                    .replaceAll("src=\"img/", "src=\"../img/")
+                    .replaceAll("href=\"css/", "href=\"../css/");
+            
         } else {
             skeletonStringFixedPaths = skeletonString;
         }
 
-        Jerry skeleton = Jerry.jerry(skeletonStringFixedPaths);
+        Jerry skeleton = Jerry.jerry(skeletonStringFixedPaths);        
         skeleton.$("title").text(repoTitle);
         String contentFromWikiHtml = pegDownProcessor.markdownToHtml(filteredSourceMdString);
         Jerry contentFromWiki = Jerry.jerry(contentFromWikiHtml);
@@ -225,9 +227,7 @@ public class Jadoc {
 
         File programLogo = programLogo(sourceDocsDir(), repoName);
 
-        
-        
-        
+                        
         if (programLogo.exists()) {
             skeleton.$("#jadoc-program-logo").attr("src", prependedPath + "img/" + repoName + "-logo-200px.png");            
             skeleton.$("#jadoc-program-logo-link").attr("href", prependedPath + "index.html");
@@ -237,6 +237,9 @@ public class Jadoc {
 
         skeleton.$("#jadoc-wiki").attr("href", Jadocs.repoWiki(repoOrganization, repoName));
         skeleton.$("#jadoc-home").attr("href", prependedPath + "index.html");
+        if (prependedPath.length() == 0){
+            skeleton.$("#jadoc-home").addClass("jadoc-tag-selected");
+        }
 
         // cleaning example versions
         skeleton.$(".jadoc-version-tab-header").remove();
@@ -244,22 +247,28 @@ public class Jadoc {
         List<RepositoryTag> tags = new ArrayList(Jadocs.filterTags(repoName, repoTags).values());
         Collections.reverse(tags);
 
+        
+        
+        
+        
         if (local) {
+                        
             if (tags.size() > 0) {
                 SemVersion ver = Jadocs.version(repoName, tags.get(0).getName());
                 if (version.getMajor() >= ver.getMajor()
                         && version.getMinor() >= ver.getMinor()) {
-                    addVersionHeaderTag(skeleton, prependedPath, version);
+                    addVersionHeaderTag(skeleton, prependedPath, version, prependedPath.length() != 0);
                 }
 
             } else {
-                addVersionHeaderTag(skeleton, prependedPath, version);
+                addVersionHeaderTag(skeleton, prependedPath, version, prependedPath.length() != 0);
             }
-        } else {
+        } else {            
             for (RepositoryTag tag : tags) {
                 SemVersion ver = Jadocs.version(repoName, tag.getName());
-                addVersionHeaderTag(skeleton, prependedPath, ver);
+                addVersionHeaderTag(skeleton, prependedPath, ver, true);
             }
+            throw new UnsupportedOperationException("repo tags are not supported yet!");
         }
 
         String sidebarString = makeSidebar(contentFromWikiHtml);
@@ -279,10 +288,11 @@ public class Jadoc {
 
     }
 
-    private static void addVersionHeaderTag(Jerry skeleton, String prependedPath, SemVersion version) {
+    private static void addVersionHeaderTag(Jerry skeleton, String prependedPath, SemVersion version, boolean selected) {
         String verShortName = Jadocs.majorMinor(version);
+        String classSelected = selected ? "jadoc-tag-selected" : "";
         skeleton.$("#jadoc-usage").append(
-                "<a class='jadoc-version-tab-header' href='"
+                "<a class='jadoc-version-tab-header " + classSelected + "' href='"
                 + prependedPath
                 + verShortName
                 + "/index.html'>" + verShortName + "</a>");

@@ -1,4 +1,4 @@
-package eu.trentorise.opendata.jadoc;
+package eu.trentorise.opendata.jedoc;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -29,9 +29,9 @@ import org.pegdown.PegDownProcessor;
  *
  * @author David Leoni
  */
-public class Jadoc {
+public class Jedoc {
 
-    private static final Logger LOG = Logger.getLogger(Jadoc.class.getName());
+    private static final Logger LOG = Logger.getLogger(Jedoc.class.getName());
 
     private String repoName;
     private String repoTitle;
@@ -73,7 +73,7 @@ public class Jadoc {
 
     }
 
-    public Jadoc(String repoName, String repoTitle, String repoOrganization, String sourceRepoDirPath, String pagesDirPath, boolean local) {
+    public Jedoc(String repoName, String repoTitle, String repoOrganization, String sourceRepoDirPath, String pagesDirPath, boolean local) {
         checkNotEmpty(repoName, "Invalid repository name!");
         checkNotEmpty(repoTitle, "Invalid repository title!");
         checkNotEmpty(repoOrganization, "Invalid repository organization!");
@@ -118,7 +118,7 @@ public class Jadoc {
 
         LOG.log(Level.INFO, "Can''t find file {0}", fileFromPath.getAbsolutePath());
 
-        URL resourceUrl = Jadoc.class.getResource(path);
+        URL resourceUrl = Jedoc.class.getResource(path);
         if (resourceUrl == null) {
             throw new NotFoundException("Can't find path in resources! " + path);
         }
@@ -155,8 +155,8 @@ public class Jadoc {
 
         String filteredSourceMdString = sourceMdString
                 .replaceAll("#\\{version}", version.toString())
-                .replaceAll("#\\{majorMinorVersion}", Jadocs.majorMinor(version))
-                .replaceAll("#\\{repoRelease}", Jadocs.repoRelease(repoOrganization, repoName, version.toString()));
+                .replaceAll("#\\{majorMinorVersion}", Jedocs.majorMinor(version))
+                .replaceAll("#\\{repoRelease}", Jedocs.repoRelease(repoOrganization, repoName, version.toString()));
 
         File skeletonFile = findResource("/skeleton.html");
 
@@ -189,31 +189,31 @@ public class Jadoc {
                     public boolean onNode(Jerry arg0, int arg1) {
                         String href = arg0.attr("href");
                         if (href.startsWith("../../src")) {
-                            arg0.attr("href", href.replace("../../src", Jadocs.repoRelease(repoOrganization, repoName, version.toString()) + "/src"));
+                            arg0.attr("href", href.replace("../../src", Jedocs.repoRelease(repoOrganization, repoName, version.toString()) + "/src"));
                             return true;
                         }
                         if (href.endsWith(".md")) {
-                            arg0.attr("href", Jadocs.htmlizePath(href));
+                            arg0.attr("href", Jedocs.htmlizePath(href));
                             return true;
                         }
 
                         if (href.equals("../../wiki")) {
-                            arg0.attr("href", href.replace("../../wiki", Jadocs.repoWiki(repoOrganization, repoName)));
+                            arg0.attr("href", href.replace("../../wiki", Jedocs.repoWiki(repoOrganization, repoName)));
                             return true;
                         }
 
                         if (href.equals("../../issues")) {
-                            arg0.attr("href", href.replace("../../issues", Jadocs.repoIssues(repoOrganization, repoName)));
+                            arg0.attr("href", href.replace("../../issues", Jedocs.repoIssues(repoOrganization, repoName)));
                             return true;
                         }
 
                         if (href.equals("../../milestones")) {
-                            arg0.attr("href", href.replace("../../milestones", Jadocs.repoMilestones(repoOrganization, repoName)));
+                            arg0.attr("href", href.replace("../../milestones", Jedocs.repoMilestones(repoOrganization, repoName)));
                             return true;
                         }
 
                         if (href.equals("docs")) {
-                            arg0.attr("href", Jadocs.majorMinor(version) + "/index.html");
+                            arg0.attr("href", Jedocs.majorMinor(version) + "/index.html");
                             return true;
                         }
 
@@ -221,30 +221,30 @@ public class Jadoc {
                     }
                 }
                 );
-        skeleton.$("#jadoc-internal-content").html(contentFromWiki.html());
+        skeleton.$("#jedoc-internal-content").html(contentFromWiki.html());
 
-        skeleton.$("#jadoc-repo-link").html(repoTitle).attr("href", prependedPath + "index.html");
+        skeleton.$("#jedoc-repo-link").html(repoTitle).attr("href", prependedPath + "index.html");
 
         File programLogo = programLogo(sourceDocsDir(), repoName);
 
                         
         if (programLogo.exists()) {
-            skeleton.$("#jadoc-program-logo").attr("src", prependedPath + "img/" + repoName + "-logo-200px.png");            
-            skeleton.$("#jadoc-program-logo-link").attr("href", prependedPath + "index.html");
+            skeleton.$("#jedoc-program-logo").attr("src", prependedPath + "img/" + repoName + "-logo-200px.png");            
+            skeleton.$("#jedoc-program-logo-link").attr("href", prependedPath + "index.html");
         } else {
-            skeleton.$("#jadoc-program-logo-link").css("display", "none");
+            skeleton.$("#jedoc-program-logo-link").css("display", "none");
         }        
 
-        skeleton.$("#jadoc-wiki").attr("href", Jadocs.repoWiki(repoOrganization, repoName));
-        skeleton.$("#jadoc-home").attr("href", prependedPath + "index.html");
+        skeleton.$("#jedoc-wiki").attr("href", Jedocs.repoWiki(repoOrganization, repoName));
+        skeleton.$("#jedoc-home").attr("href", prependedPath + "index.html");
         if (prependedPath.length() == 0){
-            skeleton.$("#jadoc-home").addClass("jadoc-tag-selected");
+            skeleton.$("#jedoc-home").addClass("jedoc-tag-selected");
         }
 
         // cleaning example versions
-        skeleton.$(".jadoc-version-tab-header").remove();
+        skeleton.$(".jedoc-version-tab-header").remove();
 
-        List<RepositoryTag> tags = new ArrayList(Jadocs.filterTags(repoName, repoTags).values());
+        List<RepositoryTag> tags = new ArrayList(Jedocs.filterTags(repoName, repoTags).values());
         Collections.reverse(tags);
 
         
@@ -254,7 +254,7 @@ public class Jadoc {
         if (local) {
                         
             if (tags.size() > 0) {
-                SemVersion ver = Jadocs.version(repoName, tags.get(0).getName());
+                SemVersion ver = Jedocs.version(repoName, tags.get(0).getName());
                 if (version.getMajor() >= ver.getMajor()
                         && version.getMinor() >= ver.getMinor()) {
                     addVersionHeaderTag(skeleton, prependedPath, version, prependedPath.length() != 0);
@@ -265,7 +265,7 @@ public class Jadoc {
             }
         } else {            
             for (RepositoryTag tag : tags) {
-                SemVersion ver = Jadocs.version(repoName, tag.getName());
+                SemVersion ver = Jedocs.version(repoName, tag.getName());
                 addVersionHeaderTag(skeleton, prependedPath, ver, true);
             }
             throw new UnsupportedOperationException("repo tags are not supported yet!");
@@ -273,12 +273,12 @@ public class Jadoc {
 
         String sidebarString = makeSidebar(contentFromWikiHtml);
         if (sidebarString.length() > 0) {
-            skeleton.$("#jadoc-internal-sidebar").html(sidebarString);
+            skeleton.$("#jedoc-internal-sidebar").html(sidebarString);
         } else {
-            skeleton.$("#jadoc-internal-sidebar").text("");
+            skeleton.$("#jedoc-internal-sidebar").text("");
         }
 
-        skeleton.$(".jadoc-to-strip").remove();
+        skeleton.$(".jedoc-to-strip").remove();
 
         try {
             FileUtils.write(outputFile, skeleton.html());
@@ -289,10 +289,10 @@ public class Jadoc {
     }
 
     private static void addVersionHeaderTag(Jerry skeleton, String prependedPath, SemVersion version, boolean selected) {
-        String verShortName = Jadocs.majorMinor(version);
-        String classSelected = selected ? "jadoc-tag-selected" : "";
-        skeleton.$("#jadoc-usage").append(
-                "<a class='jadoc-version-tab-header " + classSelected + "' href='"
+        String verShortName = Jedocs.majorMinor(version);
+        String classSelected = selected ? "jedoc-tag-selected" : "";
+        skeleton.$("#jedoc-usage").append(
+                "<a class='jedoc-version-tab-header " + classSelected + "' href='"
                 + prependedPath
                 + verShortName
                 + "/index.html'>" + verShortName + "</a>");
@@ -333,7 +333,7 @@ public class Jadoc {
     public void generateSite() throws IOException {
 
         LOG.log(Level.INFO, "Fetching {0}/{1} tags.", new Object[]{repoOrganization, repoName});
-        repoTags = Jadocs.fetchTags(repoOrganization, repoName);
+        repoTags = Jedocs.fetchTags(repoOrganization, repoName);
         MavenXpp3Reader reader = new MavenXpp3Reader();
 
         try {
@@ -347,7 +347,7 @@ public class Jadoc {
         if (local) {
             latestVersion = SemVersion.of(pom.getVersion()).withPreReleaseVersion(""); // todo take this from pom
         } else {
-            latestVersion = Jadocs.latestVersion(repoName, repoTags);
+            latestVersion = Jedocs.latestVersion(repoName, repoTags);
         }
 
         buildIndex(latestVersion);
@@ -359,12 +359,12 @@ public class Jadoc {
         } else {
             throw new UnsupportedOperationException("Need to better review non local version case!");
             /*
-             SortedMap<String, RepositoryTag> filteredTags = Jadocs.filterTags(repoName, repoTags);
+             SortedMap<String, RepositoryTag> filteredTags = Jedocs.filterTags(repoName, repoTags);
 
              for (RepositoryTag tag : filteredTags.values()) {
 
              LOG.log(Level.INFO, "Processing release tag {0}", tag.getName());
-             processDir(Jadocs.version(repoName, tag.getName()));
+             processDir(Jedocs.version(repoName, tag.getName()));
 
              }
              */
@@ -405,7 +405,7 @@ public class Jadoc {
         String repoName = "traceprov";
         String repoTitle = "TraceProv";
 
-        Jadoc jadoc = new Jadoc(
+        Jedoc jedoc = new Jedoc(
                 repoName,
                 repoTitle,
                 "opendatatrentino",
@@ -414,7 +414,7 @@ public class Jadoc {
                 true
         );
 
-        jadoc.generateSite();
+        jedoc.generateSite();
     }
 
     private String makeSidebar(String contentFromWikiHtml) {

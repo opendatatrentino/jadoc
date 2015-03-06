@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.trentorise.opendata.jadoc;
+package eu.trentorise.opendata.jedoc;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import eu.trentorise.opendata.commons.NotFoundException;
@@ -29,13 +29,13 @@ public class DirWalker extends DirectoryWalker {
 
     private File sourceRoot;
     private File destinationRoot;
-    private Jadoc jadoc;
+    private Jedoc jedoc;
     SemVersion version;
 
     /**
      * @throws NotFoundException if source root doesn't exists
      */
-    public DirWalker(File sourceRoot, File destinationRoot, Jadoc jadoc, SemVersion version) {
+    public DirWalker(File sourceRoot, File destinationRoot, Jedoc jedoc, SemVersion version) {
         super();
         checkNotNull(sourceRoot);
         if (!sourceRoot.exists()) {
@@ -45,11 +45,11 @@ public class DirWalker extends DirectoryWalker {
         if (destinationRoot.exists()) {
             throw new NotFoundException("destination directory does already exists: " + destinationRoot.getAbsolutePath());
         }
-        checkNotNull(jadoc);
+        checkNotNull(jedoc);
         checkNotNull(version);
         this.sourceRoot = sourceRoot;
         this.destinationRoot = destinationRoot;
-        this.jadoc = jadoc;
+        this.jedoc = jedoc;
         this.version = version;
     }
 
@@ -89,12 +89,12 @@ public class DirWalker extends DirectoryWalker {
         File target;
         
         if (file.getName().endsWith(".md")) {
-            target = new File(destinationRoot, Jadocs.htmlizePath(targetRelPath));
+            target = new File(destinationRoot, Jedocs.htmlizePath(targetRelPath));
             LOG.log(Level.INFO, "Creating file {0}", target.getAbsolutePath());
             if (target.exists()) {
                 throw new DirWalkerException("Target file already exists!", file, target);
             }
-            jadoc.writeMdAsHtml(file, target, "../", version);
+            jedoc.writeMdAsHtml(file, target, "../", version);
         } else {
             target = new File(destinationRoot, targetRelPath);
             if (target.exists()) {
@@ -115,8 +115,8 @@ public class DirWalker extends DirectoryWalker {
         return destinationRoot;
     }
 
-    public Jadoc getJadoc() {
-        return jadoc;
+    public Jedoc getJedoc() {
+        return jedoc;
     }
 
     public SemVersion getVersion() {

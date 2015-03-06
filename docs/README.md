@@ -1,4 +1,4 @@
-<p class="jadoc-to-strip">
+<p class="jedoc-to-strip">
 WARNING: WORK IN PROGRESS - THIS IS ONLY A TEMPLATE FOR THE DOCUMENTATION. <br/>
 RELEASE DOCS ARE ON THE PROJECT WEBSITE
 </p>
@@ -9,7 +9,7 @@ This #{version} release is just for testing docs and release system.
 
 This is a custom image for this version: <img src="img/test-img.png">
 
-This is an image for all versions: <img src="../img/jadoc-logo-200px.png" width="150px">
+This is an image for all versions: <img src="../img/jedoc-logo-200px.png" width="150px">
 
 
 Links without extension:
@@ -27,12 +27,12 @@ Great discovery: links without extension don't work...
 
 ### Usage
 
-Jadoc is available on Maven Central. To use it, put this in the dependencies section of your _pom.xml_:
+Jedoc is available on Maven Central. To use it, put this in the dependencies section of your _pom.xml_:
 
 ```
     <dependency>
         <groupId>eu.trentorise.opendata</groupId>
-        <artifactId>jadoc</artifactId>
+        <artifactId>jedoc</artifactId>
         <version>#{version}</version>            
     </dependency>
 ```

@@ -1,6 +1,6 @@
-package eu.trentorise.opendata.jadoc.test;
+package eu.trentorise.opendata.jedoc.test;
 
-import eu.trentorise.opendata.jadoc.Jadocs;
+import eu.trentorise.opendata.jedoc.Jedocs;
 import java.io.IOException;
 import java.util.List;
 import java.util.SortedMap;
@@ -52,8 +52,8 @@ public class TestGit {
    
     @Test
     public void testEgit() throws IOException  {
-        List<RepositoryTag> tags = Jadocs.fetchTags("opendatatrentino", "odt-commons");
-        SortedMap<String, RepositoryTag> filteredTags = Jadocs.filterTags("odt-commons", tags);
+        List<RepositoryTag> tags = Jedocs.fetchTags("opendatatrentino", "odt-commons");
+        SortedMap<String, RepositoryTag> filteredTags = Jedocs.filterTags("odt-commons", tags);
         for (String tagName: filteredTags.keySet()){
             RepositoryTag tag = filteredTags.get(tagName);
             System.out.println(tag.getName());

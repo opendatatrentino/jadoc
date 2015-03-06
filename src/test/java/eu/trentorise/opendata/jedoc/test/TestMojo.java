@@ -1,4 +1,4 @@
-package eu.trentorise.opendata.jadoc.test;
+package eu.trentorise.opendata.jedoc.test;
 
 import org.apache.maven.model.Model;
 import org.apache.maven.plugin.AbstractMojo;

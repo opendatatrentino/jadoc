@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.trentorise.opendata.jadoc.test;
+package eu.trentorise.opendata.jedoc.test;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.trentorise.opendata.jadoc;
+package eu.trentorise.opendata.jedoc;
 
 import static eu.trentorise.opendata.commons.OdtUtils.checkNotEmpty;
 import eu.trentorise.opendata.commons.SemVersion;
@@ -21,13 +21,13 @@ import org.eclipse.egit.github.core.client.GitHubClient;
 import org.eclipse.egit.github.core.service.RepositoryService;
 
 /**
- * Utilities for Jadoc
+ * Utilities for Jedoc
  *
  * @author David Leoni
  */
-public class Jadocs {
+public class Jedocs {
 
-    private static final Logger LOG = Logger.getLogger(Jadocs.class.getName());
+    private static final Logger LOG = Logger.getLogger(Jedocs.class.getName());
 
     /**
      * Reading file with Jgit:
@@ -65,7 +65,7 @@ public class Jadocs {
     ;
     
     /**
-     * Constructs a SemVersion out of a release tag, like i.e. jadoc-1.2.3
+     * Constructs a SemVersion out of a release tag, like i.e. jedoc-1.2.3
      */
     public static SemVersion version(String repoName, String releaseTag) {
         String versionString = releaseTag.replace(repoName + "-", "");
@@ -99,7 +99,7 @@ public class Jadocs {
      * Returns new sorted map of only version tags of the format repoName-x.y.z
      * filtered tags, the latter having the highest version.
      *
-     * @param repoName the github repository name i.e. jadoc
+     * @param repoName the github repository name i.e. jedoc
      * @param tags a list of tags from the repository
      */
     public static SortedMap<String, RepositoryTag> filterTags(String repoName, List<RepositoryTag> tags) {
@@ -122,28 +122,28 @@ public class Jadocs {
      * Returns the release tag formed by inserting a minus between the repoName
      * and the version
      *
-     * @param repoName i.e. jadoc
+     * @param repoName i.e. jedoc
      * @param version i.e. 1.2.3
-     * @return i.e. jadoc-1.2.3
+     * @return i.e. jedoc-1.2.3
      */
     public static String releaseTag(String repoName, String version) {
         return repoName + "-" + version;
     }
 
     /**
-     * Returns the github repo url, i.e. https://github.com/opendatatrentino/jadoc
+     * Returns the github repo url, i.e. https://github.com/opendatatrentino/jedoc
      *
      * @param organization i.e. opendatatrentino
-     * @param name i.e. jadoc     
+     * @param name i.e. jedoc     
      */
     public static String repoUrl(String organization, String name) {
         return "https://github.com/" + organization + "/" + name;
     }
 
     /**
-     * Returns the github release code url, i.e. https://github.com/opendatatrentino/jadoc/blob/todo-releaseTag
+     * Returns the github release code url, i.e. https://github.com/opendatatrentino/jedoc/blob/todo-releaseTag
      *
-     * @param repoName i.e. jadoc
+     * @param repoName i.e. jedoc
      * @param version i.e. 1.2.3
      */
     public static String repoRelease(String organization, String repoName, String version) {
@@ -151,30 +151,30 @@ public class Jadocs {
     }
 
     /**
-     * Returns the github wiki url, i.e. https://github.com/opendatatrentino/jadoc/wiki
+     * Returns the github wiki url, i.e. https://github.com/opendatatrentino/jedoc/wiki
      *
      * @param organization i.e. opendatatrentino
-     * @param repoName i.e. jadoc
+     * @param repoName i.e. jedoc
      */
     public static String repoWiki(String organization, String repoName) {
         return repoUrl(organization, repoName) + "/wiki";
     }
     
     /**
-     * Returns the github issues url, i.e. https://github.com/opendatatrentino/jadoc/issues
+     * Returns the github issues url, i.e. https://github.com/opendatatrentino/jedoc/issues
      *
      * @param organization i.e. opendatatrentino
-     * @param repoName i.e. jadoc
+     * @param repoName i.e. jedoc
      */
     public static String repoIssues(String organization, String repoName) {
         return repoUrl(organization, repoName) + "/issues";
     }    
 
 /**
-     * Returns the github milestones url, i.e. https://github.com/opendatatrentino/jadoc/milestones
+     * Returns the github milestones url, i.e. https://github.com/opendatatrentino/jedoc/milestones
      *
      * @param organization i.e. opendatatrentino
-     * @param repoName i.e. jadoc
+     * @param repoName i.e. jedoc
      */
     public static String repoMilestones(String organization, String repoName) {
         return repoUrl(organization, repoName) + "/milestones";
@@ -184,14 +184,14 @@ public class Jadocs {
      * Returns the github wiki url, i.e.
      *
      * @param organization i.e. opendatatrentino
-     * @param repoName i.e. jadoc
+     * @param repoName i.e. jedoc
      */
     public static String repoWebsite(String organization, String repoName) {
         return "https://" + organization + ".github.io/" + repoName;
     }
 
     public static SemVersion latestVersion(String repoName, List<RepositoryTag> tags) {
-        return Jadocs.version(repoName, Jadocs.filterTags(repoName, tags).lastKey());
+        return Jedocs.version(repoName, Jedocs.filterTags(repoName, tags).lastKey());
     }
 
     /**

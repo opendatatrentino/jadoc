@@ -1,4 +1,4 @@
-<p class="jadoc-to-strip">
+<p class="jedoc-to-strip">
 WARNING: WORK IN PROGRESS - THIS IS ONLY A TEMPLATE FOR THE DOCUMENTATION. <br/>
 RELEASE DOCS ARE ON THE PROJECT WEBSITE
 </p>

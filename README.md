@@ -1,7 +1,7 @@
 
 **About**
 
-Jadoc is a program to generate documentation for open data in trentino projects.
+Jedoc is a program to generate documentation for open data in trentino projects.
 
 
 **Features**

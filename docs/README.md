@@ -1,8 +1,7 @@
 <p class="jedoc-to-strip">
 WARNING: WORK IN PROGRESS - THIS IS ONLY A TEMPLATE FOR THE DOCUMENTATION. <br/>
-RELEASE DOCS ARE ON THE PROJECT WEBSITE
+RELEASE DOCS ARE ON THE <a href="http://opendatatrentino.github.io/jedoc/" target="_blank">PROJECT WEBSITE</a>
 </p>
-
 
 This #{version} release is just for testing docs and release system.
 

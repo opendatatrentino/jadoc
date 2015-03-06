@@ -5,9 +5,12 @@
  */
 package eu.trentorise.opendata.jedoc;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import eu.trentorise.opendata.commons.NotFoundException;
 import static eu.trentorise.opendata.commons.OdtUtils.checkNotEmpty;
 import eu.trentorise.opendata.commons.SemVersion;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.SortedMap;
@@ -19,6 +22,7 @@ import org.eclipse.egit.github.core.Repository;
 import org.eclipse.egit.github.core.RepositoryTag;
 import org.eclipse.egit.github.core.client.GitHubClient;
 import org.eclipse.egit.github.core.service.RepositoryService;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 
 /**
  * Utilities for Jedoc
@@ -56,6 +60,27 @@ public class Jedocs {
     }
 
     /**
+     * Reads a local project current branch.
+     *
+     * @param projectPath path to project root folder (the one that _contains_
+     * the .git folder)
+     * @return the current branch of provided repo
+     */
+    public static String readRepoCurrentBranch(File projectPath) {
+        checkNotNull(projectPath);
+        try {
+            FileRepositoryBuilder builder = new FileRepositoryBuilder();
+            org.eclipse.jgit.lib.Repository repo = builder.setGitDir(new File(projectPath, ".git"))
+                    .readEnvironment() // scan environment GIT_* variables
+                    .findGitDir() // scan up the file system tree
+                    .build();
+            return repo.getBranch();
+        } catch (IOException ex) {
+            throw new RuntimeException("Couldn't read current branch from " + projectPath.getAbsolutePath());
+        }
+    }
+
+    /**
      * Returns major.minor as string
      */
     public static String majorMinor(SemVersion version) {
@@ -70,6 +95,50 @@ public class Jedocs {
     public static SemVersion version(String repoName, String releaseTag) {
         String versionString = releaseTag.replace(repoName + "-", "");
         return SemVersion.of(versionString);
+    }
+    
+    /**
+     * 
+     * @param repoName i.e. "jedoc"
+     * @param major
+     * @param minor
+     * @param tags
+     * @throws NotFoundException if tag is not found
+     * @return 
+     */
+    public static RepositoryTag find(String repoName, int major, int minor, Iterable<RepositoryTag> tags){
+        for (RepositoryTag tag : tags){
+            SemVersion tagVersion = version(repoName,tag.getName());
+            if (tagVersion.getMajor() == major
+                    && tagVersion.getMinor() == minor){
+                return tag;
+            }
+        }
+        throw new NotFoundException("Couldn't find any tag matching " + major + "."+minor + " pattern");
+    }
+
+    /**
+     * Returns a semantic version from branch name in the format "branch-x.y".
+     * Result patch number will be 0.
+     *
+     * @param branchName Must be in format "branch-x.y"
+     * @throws IllegalArguemntException if branchname is not in the expected
+     * format.
+     */
+    public static SemVersion versionFromBranchName(String branchName) {
+        checkNotNull(branchName);
+
+        if (!branchName.startsWith("branch-")) {
+            throw new IllegalArgumentException("Tried to extract version from branch name " + branchName + ", but it does not starts with 'branch-'");
+        }
+
+        try {
+            SemVersion ret = SemVersion.of(branchName.replace("branch-", "").concat(".0"));
+            return ret;
+        } catch (Throwable tr) {
+            throw new IllegalArgumentException("Error while extracting version from branch name " + branchName, tr);
+        }
+
     }
 
     /**
@@ -131,17 +200,19 @@ public class Jedocs {
     }
 
     /**
-     * Returns the github repo url, i.e. https://github.com/opendatatrentino/jedoc
+     * Returns the github repo url, i.e.
+     * https://github.com/opendatatrentino/jedoc
      *
      * @param organization i.e. opendatatrentino
-     * @param name i.e. jedoc     
+     * @param name i.e. jedoc
      */
     public static String repoUrl(String organization, String name) {
         return "https://github.com/" + organization + "/" + name;
     }
 
     /**
-     * Returns the github release code url, i.e. https://github.com/opendatatrentino/jedoc/blob/todo-releaseTag
+     * Returns the github release code url, i.e.
+     * https://github.com/opendatatrentino/jedoc/blob/todo-releaseTag
      *
      * @param repoName i.e. jedoc
      * @param version i.e. 1.2.3
@@ -151,7 +222,8 @@ public class Jedocs {
     }
 
     /**
-     * Returns the github wiki url, i.e. https://github.com/opendatatrentino/jedoc/wiki
+     * Returns the github wiki url, i.e.
+     * https://github.com/opendatatrentino/jedoc/wiki
      *
      * @param organization i.e. opendatatrentino
      * @param repoName i.e. jedoc
@@ -159,27 +231,29 @@ public class Jedocs {
     public static String repoWiki(String organization, String repoName) {
         return repoUrl(organization, repoName) + "/wiki";
     }
-    
+
     /**
-     * Returns the github issues url, i.e. https://github.com/opendatatrentino/jedoc/issues
+     * Returns the github issues url, i.e.
+     * https://github.com/opendatatrentino/jedoc/issues
      *
      * @param organization i.e. opendatatrentino
      * @param repoName i.e. jedoc
      */
     public static String repoIssues(String organization, String repoName) {
         return repoUrl(organization, repoName) + "/issues";
-    }    
+    }
 
-/**
-     * Returns the github milestones url, i.e. https://github.com/opendatatrentino/jedoc/milestones
+    /**
+     * Returns the github milestones url, i.e.
+     * https://github.com/opendatatrentino/jedoc/milestones
      *
      * @param organization i.e. opendatatrentino
      * @param repoName i.e. jedoc
      */
     public static String repoMilestones(String organization, String repoName) {
         return repoUrl(organization, repoName) + "/milestones";
-    }    
-    
+    }
+
     /**
      * Returns the github wiki url, i.e.
      *
@@ -196,7 +270,8 @@ public class Jedocs {
 
     /**
      * Returns a new path
-     * @path a path that may contain .md files 
+     *
+     * @path a path that may contain .md files
      */
     public static String htmlizePath(String path) {
         if (path.endsWith("README.md")) {

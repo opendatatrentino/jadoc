@@ -3,6 +3,7 @@ package eu.trentorise.opendata.jedoc;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import eu.trentorise.opendata.commons.NotFoundException;
+import eu.trentorise.opendata.commons.OdtUtils;
 import static eu.trentorise.opendata.commons.OdtUtils.checkNotEmpty;
 import eu.trentorise.opendata.commons.SemVersion;
 import java.io.File;
@@ -173,12 +174,12 @@ public class Jedoc {
             skeletonStringFixedPaths = skeletonString.replaceAll("src=\"js/", "src=\"../js/")
                     .replaceAll("src=\"img/", "src=\"../img/")
                     .replaceAll("href=\"css/", "href=\"../css/");
-            
+
         } else {
             skeletonStringFixedPaths = skeletonString;
         }
 
-        Jerry skeleton = Jerry.jerry(skeletonStringFixedPaths);        
+        Jerry skeleton = Jerry.jerry(skeletonStringFixedPaths);
         skeleton.$("title").text(repoTitle);
         String contentFromWikiHtml = pegDownProcessor.markdownToHtml(filteredSourceMdString);
         Jerry contentFromWiki = Jerry.jerry(contentFromWikiHtml);
@@ -212,7 +213,7 @@ public class Jedoc {
                             return true;
                         }
 
-                        if (href.equals("docs")) {
+                        if (OdtUtils.removeTrailingSlash(href).equals("docs")) {
                             arg0.attr("href", Jedocs.majorMinor(version) + "/index.html");
                             return true;
                         }
@@ -227,17 +228,18 @@ public class Jedoc {
 
         File programLogo = programLogo(sourceDocsDir(), repoName);
 
-                        
         if (programLogo.exists()) {
-            skeleton.$("#jedoc-program-logo").attr("src", prependedPath + "img/" + repoName + "-logo-200px.png");            
+            skeleton.$("#jedoc-program-logo").attr("src", prependedPath + "img/" + repoName + "-logo-200px.png");
             skeleton.$("#jedoc-program-logo-link").attr("href", prependedPath + "index.html");
         } else {
             skeleton.$("#jedoc-program-logo-link").css("display", "none");
-        }        
+        }
 
         skeleton.$("#jedoc-wiki").attr("href", Jedocs.repoWiki(repoOrganization, repoName));
+        skeleton.$("#jedoc-project").attr("href", Jedocs.repoUrl(repoOrganization, repoName));
+        
         skeleton.$("#jedoc-home").attr("href", prependedPath + "index.html");
-        if (prependedPath.length() == 0){
+        if (prependedPath.length() == 0) {
             skeleton.$("#jedoc-home").addClass("jedoc-tag-selected");
         }
 
@@ -247,12 +249,8 @@ public class Jedoc {
         List<RepositoryTag> tags = new ArrayList(Jedocs.filterTags(repoName, repoTags).values());
         Collections.reverse(tags);
 
-        
-        
-        
-        
         if (local) {
-                        
+
             if (tags.size() > 0) {
                 SemVersion ver = Jedocs.version(repoName, tags.get(0).getName());
                 if (version.getMajor() >= ver.getMajor()
@@ -263,12 +261,16 @@ public class Jedoc {
             } else {
                 addVersionHeaderTag(skeleton, prependedPath, version, prependedPath.length() != 0);
             }
-        } else {            
+        } else {
+            LOG.warning("TODO - ADDING ONLY ONE TAG AND IGNORING THE OTHER ONES");
+            addVersionHeaderTag(skeleton, prependedPath, version, prependedPath.length() != 0);
+            /*
             for (RepositoryTag tag : tags) {
                 SemVersion ver = Jedocs.version(repoName, tag.getName());
                 addVersionHeaderTag(skeleton, prependedPath, ver, true);
             }
             throw new UnsupportedOperationException("repo tags are not supported yet!");
+            */
         }
 
         String sidebarString = makeSidebar(contentFromWikiHtml);
@@ -306,6 +308,18 @@ public class Jedoc {
         writeMdAsHtml(sourceMdFile, outputFile, "", latestVersion);
     }
 
+    private File targetVersionDir(SemVersion semVersion) {
+        checkNotNull(semVersion);
+        return new File(pagesDir, "" + semVersion.getMajor() + "." + semVersion.getMinor());
+    }
+
+    /**
+     * Returns the directory where docs about the latest version will end up.
+     */
+    private File targetLatestDocsDir() {
+        return new File(pagesDir, "latest");
+    }
+
     private void processDir(SemVersion semVersion) {
         checkNotNull(semVersion);
 
@@ -316,7 +330,7 @@ public class Jedoc {
             throw new RuntimeException("Can't find source dir!" + sourceDocsDir().getAbsolutePath());
         }
 
-        File targetVersionDir = new File(pagesDir, "" + semVersion.getMajor() + "." + semVersion.getMinor());
+        File targetVersionDir = targetVersionDir(semVersion);
 
         deleteOutputVersionDir(targetVersionDir, semVersion.getMajor(), semVersion.getMinor());
 
@@ -330,6 +344,27 @@ public class Jedoc {
 
     }
 
+    /**
+     * Copies target version to 'latest' directory, cleaning it before the copy
+     * @param version 
+     */
+    private void createLatestDocsDirectory(SemVersion version){
+        
+        File targetLatestDocsDir = targetLatestDocsDir();
+        LOG.log(Level.INFO, "Creating latest docs directory {0}", targetLatestDocsDir.getAbsolutePath());
+        
+        if (!targetLatestDocsDir.getAbsolutePath().endsWith("latest")){
+            throw new RuntimeException("Trying to delete a latest docs dir which doesn't end with 'latest'!");
+        }
+        try {                        
+            FileUtils.deleteDirectory(targetLatestDocsDir);
+            FileUtils.copyDirectory(targetVersionDir(version), targetLatestDocsDir);    
+        } catch (Throwable tr){
+            throw new RuntimeException("Error while creating latest docs directory ", tr);
+        }
+        
+    }
+    
     public void generateSite() throws IOException {
 
         LOG.log(Level.INFO, "Fetching {0}/{1} tags.", new Object[]{repoOrganization, repoName});
@@ -342,22 +377,30 @@ public class Jedoc {
             throw new RuntimeException("Error while reading pom!", tr);
         }
 
-        SemVersion latestVersion;
+        SemVersion snapshotVersion = SemVersion.of(pom.getVersion()).withPreReleaseVersion("");
+        SemVersion latestPublishedVersion = Jedocs.latestVersion(repoName, repoTags);
 
         if (local) {
-            latestVersion = SemVersion.of(pom.getVersion()).withPreReleaseVersion(""); // todo take this from pom
-        } else {
-            latestVersion = Jedocs.latestVersion(repoName, repoTags);
-        }
-
-        buildIndex(latestVersion);
-
-        if (local) {
-            LOG.log(Level.INFO, "Processing local source");
-            processDir(latestVersion);
+            LOG.log(Level.INFO, "Processing local version");
+            buildIndex(snapshotVersion);
+            processDir(snapshotVersion);
+            createLatestDocsDirectory(snapshotVersion);
 
         } else {
-            throw new UnsupportedOperationException("Need to better review non local version case!");
+            LOG.log(Level.INFO, "Processing published version");
+            buildIndex(latestPublishedVersion);
+            String curBranch = Jedocs.readRepoCurrentBranch(sourceRepoDir);
+            SemVersion curBranchVersion = Jedocs.versionFromBranchName(curBranch);
+            RepositoryTag releaseTag;
+            try {
+                releaseTag = Jedocs.find(repoName, curBranchVersion.getMajor(), curBranchVersion.getMinor(), repoTags);
+            } catch (NotFoundException ex) {
+                throw new RuntimeException("Current branch " + curBranch + " does not correspond to any released version!", ex);
+            }
+            SemVersion tagVersion = Jedocs.version(repoName, releaseTag.getName());
+            processDir(tagVersion);
+            createLatestDocsDirectory(tagVersion);
+            LOG.warning("TODO - PROCESSING ONLY CURRENT BRANCH, NEED TO PROCESS ALL BRANCHES INSTEAD!");
             /*
              SortedMap<String, RepositoryTag> filteredTags = Jedocs.filterTags(repoName, repoTags);
 
@@ -368,6 +411,7 @@ public class Jedoc {
 
              }
              */
+
         }
 
         File websiteTemplateDir = findResource("/website-template");
@@ -411,7 +455,7 @@ public class Jedoc {
                 "opendatatrentino",
                 "..\\..\\traceprov\\prj", // todo fixed path!
                 "..\\..\\traceprov\\pages", // todo fixed path!
-                true
+                false
         );
 
         jedoc.generateSite();

@@ -7,6 +7,7 @@ body {
     background-position: center;            
     background-attachment: fixed;
     background-size: cover;
+    font-family: Arial, Georgia, Serif;
 }
 
 #jedoc-wrapper {
@@ -103,10 +104,11 @@ body {
 
 #jedoc-repo-link {
     position:absolute; 
-    margin-left:5px; 
-    top:30px; 
+    margin-left:15px; 
+    top:15px; 
     font-size:24px;
     text-decoration: none;
+    color:black;
 }
 
 #jedoc-program-logo {

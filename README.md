@@ -13,7 +13,7 @@ It's modeled after this workflow, where you:
 6. run Jedoc to create a corresponding github website (i.e. http://opendatatrentino.github.io/jedoc) out of the docs. 
 7. spam the world with links to your new project website
 
-Project wiki (i.e. [jedoc wiki](../../wiki)) is used for information about contributing to the project.
+Project wiki (i.e. [jedoc wiki](../wiki)) is used for information about contributing to the project.
 
 This way we 
 

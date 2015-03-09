@@ -1,3 +1,7 @@
+<p class="jedoc-to-strip">
+WARNING: THIS IS ONLY A TEMPLATE FOR THE DOCUMENTATION. <br/>
+RELEASE DOCS ARE ON THE <a href="http://opendatatrentino.github.io/jedoc/" target="_blank">PROJECT WEBSITE</a>
+</p>
 
 **About**
 
@@ -11,7 +15,7 @@ It's modeled after this workflow, where you:
 4. create a branch named `branch-x.y` (i.e `branch-1.2`)
 5. release your library using <a href="http://semver.org" target="_blank">semantic versioning</a> and tag it with tagname `projectName-x.y.z` (i.e. `jedoc-1.2.3`)
 6. run Jedoc to create a corresponding github website (i.e. http://opendatatrentino.github.io/jedoc) out of the docs. 
-7. spam the world with links to your new project website
+7. spam the world with links to your new shiny project website
 
 Project wiki (i.e. [jedoc wiki](../../wiki)) is used for information about contributing to the project.
 

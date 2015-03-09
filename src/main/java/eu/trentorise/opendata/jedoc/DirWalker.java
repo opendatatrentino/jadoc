@@ -29,13 +29,13 @@ public class DirWalker extends DirectoryWalker {
 
     private File sourceRoot;
     private File destinationRoot;
-    private Jedoc jedoc;
+    private JedocProject jedoc;
     SemVersion version;
 
     /**
      * @throws NotFoundException if source root doesn't exists
      */
-    public DirWalker(File sourceRoot, File destinationRoot, Jedoc jedoc, SemVersion version) {
+    public DirWalker(File sourceRoot, File destinationRoot, JedocProject jedoc, SemVersion version) {
         super();
         checkNotNull(sourceRoot);
         if (!sourceRoot.exists()) {
@@ -115,7 +115,7 @@ public class DirWalker extends DirectoryWalker {
         return destinationRoot;
     }
 
-    public Jedoc getJedoc() {
+    public JedocProject getJedoc() {
         return jedoc;
     }
 

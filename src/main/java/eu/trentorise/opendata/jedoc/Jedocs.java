@@ -129,7 +129,7 @@ public class Jedocs {
         checkNotNull(branchName);
 
         if (!branchName.startsWith("branch-")) {
-            throw new IllegalArgumentException("Tried to extract version from branch name " + branchName + ", but it does not starts with 'branch-'");
+            throw new IllegalArgumentException("Tried to extract version from branch name '" + branchName + "', but it does not start with 'branch-'  !!!");
         }
 
         try {
@@ -195,10 +195,11 @@ public class Jedocs {
      * @param version i.e. 1.2.3
      * @return i.e. jedoc-1.2.3
      */
-    public static String releaseTag(String repoName, String version) {
+    public static String releaseTag(String repoName, SemVersion version) {
         return repoName + "-" + version;
     }
-
+    
+    
     /**
      * Returns the github repo url, i.e.
      * https://github.com/opendatatrentino/jedoc
@@ -217,8 +218,8 @@ public class Jedocs {
      * @param repoName i.e. jedoc
      * @param version i.e. 1.2.3
      */
-    public static String repoRelease(String organization, String repoName, String version) {
-        return repoUrl(organization, repoName) + "/blob/" + version;
+    public static String repoRelease(String organization, String repoName, SemVersion version) {
+        return repoUrl(organization, repoName) + "/blob/" + releaseTag(repoName, version);
     }
 
     /**

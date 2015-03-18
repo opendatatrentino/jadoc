@@ -25,6 +25,9 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.eclipse.egit.github.core.RepositoryTag;
 import eu.trentorise.opendata.jedoc.org.pegdown.Parser;
 import eu.trentorise.opendata.jedoc.org.pegdown.PegDownProcessor;
+import java.text.ParseException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -230,7 +233,7 @@ public class JedocProject {
                     }
                 }
                 );
-        
+
         contentFromWiki.$("img")
                 .each(new JerryFunction() {
 
@@ -272,6 +275,15 @@ public class JedocProject {
         List<RepositoryTag> tags = new ArrayList(Jedocs.filterTags(repoName, repoTags).values());
         Collections.reverse(tags);
 
+        String sidebarString = makeSidebar(contentFromWikiHtml);
+        if (sidebarString.length() > 0) {
+            skeleton.$("#jedoc-internal-sidebar").html(sidebarString);
+        } else {
+            skeleton.$("#jedoc-internal-sidebar").text("");
+        }
+
+        skeleton.$(".jedoc-to-strip").remove();
+
         if (local) {
 
             if (tags.size() > 0) {
@@ -284,6 +296,7 @@ public class JedocProject {
             } else {
                 addVersionHeaderTag(skeleton, prependedPath, version, prependedPath.length() != 0);
             }
+
         } else {
             LOG.warning("TODO - ADDING ONLY ONE TAG AND IGNORING THE OTHER ONES");
             addVersionHeaderTag(skeleton, prependedPath, version, prependedPath.length() != 0);
@@ -294,16 +307,12 @@ public class JedocProject {
              }
              throw new UnsupportedOperationException("repo tags are not supported yet!");
              */
+            Pattern p = Pattern.compile("todo", Pattern.CASE_INSENSITIVE);
+            Matcher matcher = p.matcher(skeleton.html());
+            if (matcher.find()) {
+                throw new RuntimeException("Found '" + matcher.group() + "' string in file " + sourceMdFile.getAbsolutePath() + " (at position " + matcher.start() + ")");
+            }
         }
-
-        String sidebarString = makeSidebar(contentFromWikiHtml);
-        if (sidebarString.length() > 0) {
-            skeleton.$("#jedoc-internal-sidebar").html(sidebarString);
-        } else {
-            skeleton.$("#jedoc-internal-sidebar").text("");
-        }
-
-        skeleton.$(".jedoc-to-strip").remove();
 
         try {
             FileUtils.write(outputFile, skeleton.html());
@@ -402,7 +411,6 @@ public class JedocProject {
         }
 
         SemVersion snapshotVersion = SemVersion.of(pom.getVersion()).withPreReleaseVersion("");
-        SemVersion latestPublishedVersion = Jedocs.latestVersion(repoName, repoTags);
 
         if (local) {
             LOG.log(Level.INFO, "Processing local version");
@@ -411,6 +419,10 @@ public class JedocProject {
             createLatestDocsDirectory(snapshotVersion);
 
         } else {
+            if (repoTags.isEmpty()) {
+                throw new NotFoundException("There are no tags at all in the repository!!");
+            }
+            SemVersion latestPublishedVersion = Jedocs.latestVersion(repoName, repoTags);
             LOG.log(Level.INFO, "Processing published version");
             buildIndex(latestPublishedVersion);
             String curBranch = Jedocs.readRepoCurrentBranch(sourceRepoDir);
@@ -466,23 +478,6 @@ public class JedocProject {
         FileUtils.copyFile(new File(sourceRepoDir, "LICENSE.txt"), new File(pagesDir, "LICENSE.txt"));
 
         LOG.info("\n\nSite is now browsable at " + pagesDir.getAbsolutePath() + "\n\n");
-    }
-
-    public static void main(String[] args) throws IOException, URISyntaxException {
-
-        String repoName = "jackan";
-        String repoTitle = "Jackan";
-
-        JedocProject jedoc = new JedocProject(
-                repoName,
-                repoTitle,
-                "opendatatrentino",
-                "..\\..\\" + repoName + "\\prj", // todo fixed path!
-                "..\\..\\" + repoName + "\\pages", // todo fixed path!
-                false
-        );
-
-        jedoc.generateSite();
     }
 
     private String makeSidebar(String contentFromWikiHtml) {

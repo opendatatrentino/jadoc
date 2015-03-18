@@ -266,7 +266,12 @@ public class Jedocs {
     }
 
     public static SemVersion latestVersion(String repoName, List<RepositoryTag> tags) {
-        return Jedocs.version(repoName, Jedocs.filterTags(repoName, tags).lastKey());
+        checkNotEmpty(tags, "Invalid repository tags!");
+        SortedMap<String, RepositoryTag> filteredTags = Jedocs.filterTags(repoName, tags);
+        if (filteredTags.isEmpty()){
+            throw new NotFoundException("Couldn't find any released version!");
+        }
+        return Jedocs.version(repoName, filteredTags.lastKey());
     }
 
     /**

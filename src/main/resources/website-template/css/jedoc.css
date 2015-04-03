@@ -51,15 +51,25 @@ body {
     z-index: 100;
     background-color:#f5f2ec;
     //opacity:0.9;
+    
 }                     
 
-#jedoc-internal-sidebar{
+.jedoc-sidebar-block {
     padding: 10px;
 }
 
-#jedoc-internal-sidebar div {
+.jedoc-sidebar-block div {
     margin-top: 10px;
 }            
+
+.jedoc-sidebar-block hr {
+    margin-bottom:19px;
+}
+
+#jedoc-internal-sidebar{
+    
+}
+
 
 #jedoc-nav-header {
     display: inline; 

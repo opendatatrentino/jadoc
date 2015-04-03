@@ -7,17 +7,25 @@ package eu.trentorise.opendata.jedoc;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import eu.trentorise.opendata.commons.NotFoundException;
+import eu.trentorise.opendata.commons.OdtUtils;
 import static eu.trentorise.opendata.commons.OdtUtils.checkNotEmpty;
 import eu.trentorise.opendata.commons.SemVersion;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.egit.github.core.Repository;
 import org.eclipse.egit.github.core.RepositoryTag;
 import org.eclipse.egit.github.core.client.GitHubClient;
@@ -33,6 +41,8 @@ public class Jedocs {
 
     private static final Logger LOG = Logger.getLogger(Jedocs.class.getName());
 
+    public static final int CONNECTION_TIMEOUT = 1000;
+
     /**
      * Reading file with Jgit:
      * https://github.com/centic9/jgit-cookbook/blob/master/src/main/java/org/dstadler/jgit/api/ReadFileFromCommit.java
@@ -42,8 +52,8 @@ public class Jedocs {
      * requests per hour
      */
     public static List<RepositoryTag> fetchTags(String organization, String repoName) {
-        checkNotEmpty(organization, "Invalid organization!");
-        checkNotEmpty(repoName, "Invalid repo name!");
+        OdtUtils.checkNotEmpty(organization, "Invalid organization!");
+        OdtUtils.checkNotEmpty(repoName, "Invalid repo name!");
 
         LOG.log(Level.FINE, "Fetching {0}/{1} tags.", new Object[]{organization, repoName});
 
@@ -96,25 +106,25 @@ public class Jedocs {
         String versionString = releaseTag.replace(repoName + "-", "");
         return SemVersion.of(versionString);
     }
-    
+
     /**
-     * 
+     *
      * @param repoName i.e. "jedoc"
      * @param major
      * @param minor
      * @param tags
      * @throws NotFoundException if tag is not found
-     * @return 
+     * @return
      */
-    public static RepositoryTag find(String repoName, int major, int minor, Iterable<RepositoryTag> tags){
-        for (RepositoryTag tag : tags){
-            SemVersion tagVersion = version(repoName,tag.getName());
+    public static RepositoryTag find(String repoName, int major, int minor, Iterable<RepositoryTag> tags) {
+        for (RepositoryTag tag : tags) {
+            SemVersion tagVersion = version(repoName, tag.getName());
             if (tagVersion.getMajor() == major
-                    && tagVersion.getMinor() == minor){
+                    && tagVersion.getMinor() == minor) {
                 return tag;
             }
         }
-        throw new NotFoundException("Couldn't find any tag matching " + major + "."+minor + " pattern");
+        throw new NotFoundException("Couldn't find any tag matching " + major + "." + minor + " pattern");
     }
 
     /**
@@ -198,8 +208,7 @@ public class Jedocs {
     public static String releaseTag(String repoName, SemVersion version) {
         return repoName + "-" + version;
     }
-    
-    
+
     /**
      * Returns the github repo url, i.e.
      * https://github.com/opendatatrentino/jedoc
@@ -266,9 +275,9 @@ public class Jedocs {
     }
 
     public static SemVersion latestVersion(String repoName, List<RepositoryTag> tags) {
-        checkNotEmpty(tags, "Invalid repository tags!");
+        OdtUtils.checkNotEmpty(tags, "Invalid repository tags!");
         SortedMap<String, RepositoryTag> filteredTags = Jedocs.filterTags(repoName, tags);
-        if (filteredTags.isEmpty()){
+        if (filteredTags.isEmpty()) {
             throw new NotFoundException("Couldn't find any released version!");
         }
         return Jedocs.version(repoName, filteredTags.lastKey());
@@ -288,4 +297,83 @@ public class Jedocs {
         return path;
     }
 
+    /**
+     *
+     * @return non-null input string
+     * @param string
+     * @throws IllegalArgumentException on empty string
+     */
+    public static String checkNotMeaningful(@Nullable String string, @Nullable Object prependedErrorMessage) {
+        OdtUtils.checkNotEmpty(string, prependedErrorMessage);
+        for (int i = 0; i < string.length(); i++) {
+            if (string.charAt(i) != '\n' && string.charAt(i) != '\t' && string.charAt(i) != ' ') {
+                return string;
+            }
+        }
+        throw new IllegalArgumentException(String.valueOf(prependedErrorMessage) + " -- Reason: String contains only empty spaces/tabs/carriage returns!");
+    }
+
+    /**
+     * Fetches Javadoc of released artifact and writes it into {@code destFile}
+     *
+     * @param destFile must exists.
+     */
+    public static File fetchJavadoc(String groupId, String artifactId, SemVersion version) {
+        checkNotEmpty(groupId, "Invalid groupId!");
+        checkNotEmpty(artifactId, "Invalid artifactId!");
+        checkNotNull(version);
+
+        File destFile;
+
+        try {
+            destFile = File.createTempFile(groupId + "-" + artifactId +  "-javadoc", ".jar");
+            destFile.deleteOnExit();
+        } catch (IOException ex) {
+            throw new RuntimeException("Couldn't create target javadoc file!", ex);
+        }
+
+        URL url;
+        try {
+            url = new URL("http://repo1.maven.org/maven2/" + groupId.replace(".", "/") + "/" + artifactId + "/" + version + "/" + artifactId + "-" + version + "-javadoc.jar");
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("Error while forming javadoc URL!", ex);
+        }
+        LOG.log(Level.INFO, "Fetching javadoc from {0} into {1} ...", new Object[]{url, destFile.getAbsolutePath()});
+        try {
+            FileUtils.copyURLToFile(url, destFile, CONNECTION_TIMEOUT, CONNECTION_TIMEOUT);
+        } catch (IOException ex) {
+            throw new RuntimeException("Error while fetch-and-write javadoc for " + groupId + "/" + artifactId + "-" + version + " into file " + destFile.getAbsoluteFile(), ex);
+        }
+        return destFile;
+    }
+
+    public static void extractJar(File jarFile, File destDir) {
+        checkNotNull(jarFile);
+        checkNotNull(destDir);
+        try {
+            JarFile jar = new JarFile(jarFile);
+            java.util.Enumeration enumEntries = jar.entries();
+            while (enumEntries.hasMoreElements()) {
+                JarEntry file = (JarEntry) enumEntries.nextElement();
+                File f = new File(destDir + File.separator + file.getName());
+                
+                if (file.isDirectory()) { // if its a directory, create it
+                    f.mkdirs();
+                    continue;
+                } else {
+                    f.getParentFile().mkdirs();                    
+                }                
+                
+                InputStream is = jar.getInputStream(file); // get the input stream
+                FileOutputStream fos = new FileOutputStream(f);
+                while (is.available() > 0) {  // write contents of 'is' to 'fos'
+                    fos.write(is.read());
+                }
+                fos.close();
+                is.close();
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException("Error while extracting jar file! Jar source: " + jarFile.getAbsolutePath() + " destDir = " + destDir.getAbsolutePath(), ex);
+        }
+    }
 }

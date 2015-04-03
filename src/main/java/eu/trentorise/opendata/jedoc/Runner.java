@@ -16,15 +16,15 @@ public class Runner {
     
      public static void main(String[] args) throws IOException, URISyntaxException {
 
-        String repoName = "odt-commons";
-        String repoTitle = "Odt Commons";
+        String repoName = "jedoc";
+        String repoTitle = "Jedoc";
 
         JedocProject jedoc = new JedocProject(
                 repoName,
                 repoTitle,
                 "opendatatrentino",
                 "..\\..\\" + repoName + "\\prj", // todo fixed path!
-                "..\\..\\" + repoName + "\\pages", // todo fixed path!
+                "..\\..\\" + repoName + "\\prj\\target\\site", // todo fixed path!
                 true
         );
 

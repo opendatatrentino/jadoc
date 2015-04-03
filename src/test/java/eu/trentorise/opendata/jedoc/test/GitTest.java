@@ -1,5 +1,6 @@
 package eu.trentorise.opendata.jedoc.test;
 
+import eu.trentorise.opendata.commons.OdtConfig;
 import eu.trentorise.opendata.jedoc.Jedocs;
 import java.io.File;
 import java.io.IOException;
@@ -12,15 +13,22 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
  *
  * @author David Leoni
  */
-public class TestGit {
+public class GitTest {
 
-    private static final Logger LOG = Logger.getLogger(TestGit.class.getName());
+    private static final Logger LOG = Logger.getLogger(GitTest.class.getName());
+
+    @BeforeClass
+    public static void beforeClass() {
+        OdtConfig.init(GitTest.class);
+    }    
+        
 
     // TODO add test methods here.
     // The methods must be annotated with annotation @Test. For example:

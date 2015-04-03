@@ -11,12 +11,16 @@ import eu.trentorise.opendata.commons.OdtUtils;
 import static eu.trentorise.opendata.commons.OdtUtils.checkNotEmpty;
 import eu.trentorise.opendata.commons.SemVersion;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -63,7 +67,8 @@ public class Jedocs {
             Repository repo = service.getRepository(organization, repoName);
             List<RepositoryTag> tags = service.getTags(repo);
             return tags;
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             throw new RuntimeException(ex);
         }
 
@@ -85,7 +90,8 @@ public class Jedocs {
                     .findGitDir() // scan up the file system tree
                     .build();
             return repo.getBranch();
-        } catch (IOException ex) {
+        }
+        catch (IOException ex) {
             throw new RuntimeException("Couldn't read current branch from " + projectPath.getAbsolutePath());
         }
     }
@@ -145,7 +151,8 @@ public class Jedocs {
         try {
             SemVersion ret = SemVersion.of(branchName.replace("branch-", "").concat(".0"));
             return ret;
-        } catch (Throwable tr) {
+        }
+        catch (Throwable tr) {
             throw new IllegalArgumentException("Error while extracting version from branch name " + branchName, tr);
         }
 
@@ -326,54 +333,141 @@ public class Jedocs {
         File destFile;
 
         try {
-            destFile = File.createTempFile(groupId + "-" + artifactId +  "-javadoc", ".jar");
+            destFile = File.createTempFile(groupId + "-" + artifactId + "-javadoc", ".jar");
             destFile.deleteOnExit();
-        } catch (IOException ex) {
+        }
+        catch (IOException ex) {
             throw new RuntimeException("Couldn't create target javadoc file!", ex);
         }
 
         URL url;
         try {
             url = new URL("http://repo1.maven.org/maven2/" + groupId.replace(".", "/") + "/" + artifactId + "/" + version + "/" + artifactId + "-" + version + "-javadoc.jar");
-        } catch (MalformedURLException ex) {
+        }
+        catch (MalformedURLException ex) {
             throw new RuntimeException("Error while forming javadoc URL!", ex);
         }
         LOG.log(Level.INFO, "Fetching javadoc from {0} into {1} ...", new Object[]{url, destFile.getAbsolutePath()});
         try {
             FileUtils.copyURLToFile(url, destFile, CONNECTION_TIMEOUT, CONNECTION_TIMEOUT);
-        } catch (IOException ex) {
+        }
+        catch (IOException ex) {
             throw new RuntimeException("Error while fetch-and-write javadoc for " + groupId + "/" + artifactId + "-" + version + " into file " + destFile.getAbsoluteFile(), ex);
         }
         return destFile;
     }
 
-    public static void extractJar(File jarFile, File destDir) {
-        checkNotNull(jarFile);
+    /**
+     * Extracts the directory at resource path to target directory. First
+     * directory is searched in local "src/main/resources" so the thing also
+     * works when developing in the IDE. If not found then searches in jar file.
+     */
+    public static void copyDirFromResource(Class clazz, String dirPath, File destDir) {
+        File sourceDir = new File(dirPath);
+
+        if (sourceDir.exists()) {
+            LOG.log(Level.INFO, "Copying directory from {0} to {1}", new Object[]{sourceDir.getAbsolutePath(), destDir.getAbsolutePath()});
+            try {
+                FileUtils.copyDirectory(sourceDir, destDir);
+            }
+            catch (IOException ex) {
+                throw new RuntimeException("Couldn't copy the directory!", ex);
+            }
+        } else {
+            final File jarFile = new File(clazz.getProtectionDomain().getCodeSource().getLocation().getPath());
+
+            copyDirFromJar(jarFile, destDir, dirPath);
+
+        }
+    }
+
+    /**
+     *
+     * Extracts the files starting with dirPath from {@code file} to
+     * {@code destDir}
+     *
+     * @param dirPath the prefix used for filtering. If empty the whole jar
+     * content is extracted.
+     */
+    public static void copyDirFromJar(File file, File destDir, String dirPath) {
+        checkNotNull(file);
         checkNotNull(destDir);
+        checkNotNull(dirPath);
+
+        String normalizedDirPath;
+        if (dirPath.startsWith("/")) {
+            normalizedDirPath = dirPath.substring(1);
+        } else {
+            normalizedDirPath = dirPath;
+        }
+
         try {
-            JarFile jar = new JarFile(jarFile);
+            JarFile jar = new JarFile(file);
             java.util.Enumeration enumEntries = jar.entries();
             while (enumEntries.hasMoreElements()) {
-                JarEntry file = (JarEntry) enumEntries.nextElement();
-                File f = new File(destDir + File.separator + file.getName());
-                
-                if (file.isDirectory()) { // if its a directory, create it
-                    f.mkdirs();
-                    continue;
-                } else {
-                    f.getParentFile().mkdirs();                    
-                }                
-                
-                InputStream is = jar.getInputStream(file); // get the input stream
-                FileOutputStream fos = new FileOutputStream(f);
-                while (is.available() > 0) {  // write contents of 'is' to 'fos'
-                    fos.write(is.read());
+                JarEntry jarEntry = (JarEntry) enumEntries.nextElement();
+                if (jarEntry.getName().startsWith(normalizedDirPath)) {
+                    File f = new File(
+                            destDir
+                            + File.separator
+                            + jarEntry
+                            .getName()
+                            .substring(normalizedDirPath.length()));
+
+                    if (jarEntry.isDirectory()) { // if its a directory, create it
+                        f.mkdirs();
+                        continue;
+                    } else {
+                        f.getParentFile().mkdirs();
+                    }
+
+                    InputStream is = jar.getInputStream(jarEntry); // get the input stream
+                    FileOutputStream fos = new FileOutputStream(f);
+                    while (is.available() > 0) {  // write contents of 'is' to 'fos'
+                        fos.write(is.read());
+                    }
+                    fos.close();
+                    is.close();
                 }
-                fos.close();
-                is.close();
+
             }
-        } catch (Exception ex) {
-            throw new RuntimeException("Error while extracting jar file! Jar source: " + jarFile.getAbsolutePath() + " destDir = " + destDir.getAbsolutePath(), ex);
         }
+        catch (Exception ex) {
+            throw new RuntimeException("Error while extracting jar file! Jar source: " + file.getAbsolutePath() + " destDir = " + destDir.getAbsolutePath(), ex);
+        }
+    }
+
+    /**
+     * Searches resource indicated by path first in src/main/resources (so it
+     * works even when developing), then in proper classpath resources. If
+     * resource is found it is returned as input stream, otherwise an exception
+     * is thrown.
+     *
+     * @throws NotFoundException if path can't be found.
+     */
+    public static InputStream findResourceStream(String path) {
+
+        checkNotNull(path, "invalid path!");
+
+        String localPath = "src/main/resources" + path;
+
+        try {
+            return new FileInputStream(localPath);
+        }
+        catch (FileNotFoundException ex) {
+        }
+
+        LOG.log(Level.INFO, "Can''t find file {0}", new File(localPath).getAbsolutePath());
+
+        try {
+            URL url = JedocProject.class.getResource(path);
+            LOG.log(Level.INFO, "Found file in {0}", url);
+            InputStream ret = JedocProject.class.getResourceAsStream(path);
+            return ret;
+        }
+        catch (Exception ex) {
+            throw new NotFoundException("Can't load file in resources! " + path);
+        }
+
     }
 }

@@ -1,7 +1,9 @@
 package eu.trentorise.opendata.jedoc;
 
+import com.google.common.base.Charsets;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.io.Resources;
 import eu.trentorise.opendata.commons.NotFoundException;
 import eu.trentorise.opendata.commons.OdtUtils;
 import static eu.trentorise.opendata.commons.OdtUtils.checkNotEmpty;
@@ -24,8 +26,13 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.eclipse.egit.github.core.RepositoryTag;
 import eu.trentorise.opendata.jedoc.org.pegdown.Parser;
 import eu.trentorise.opendata.jedoc.org.pegdown.PegDownProcessor;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.net.MalformedURLException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.io.IOUtils;
 
 /**
  *
@@ -67,7 +74,8 @@ public class JedocProject {
                 LOG.info("Found already existing output dir, cleaning it...");
                 try {
                     FileUtils.deleteDirectory(outputVersionDir);
-                } catch (Exception ex) {
+                }
+                catch (Exception ex) {
                     throw new RuntimeException("Error while deleting directory!", ex);
                 }
             } else {
@@ -87,9 +95,15 @@ public class JedocProject {
         this.repoName = repoName;
         this.repoTitle = repoTitle;
         this.repoOrganization = repoOrganization;
-        this.sourceRepoDir = new File(sourceRepoDirPath);
+        if (sourceRepoDirPath.isEmpty()) {
+            this.sourceRepoDir = new File("." + File.separator);
+        } else {
+            this.sourceRepoDir = new File(sourceRepoDirPath);
+        }
         this.local = local;
         this.pagesDir = new File(pagesDirPath);
+        checkArgument(!sourceRepoDir.getAbsolutePath().equals(pagesDir.getAbsolutePath()),
+                "Source folder and target folder coincide! They are " + sourceRepoDir.getAbsolutePath());
         this.pegDownProcessor = new PegDownProcessor(
                 Parser.QUOTES
                 | Parser.HARDWRAPS
@@ -118,31 +132,6 @@ public class JedocProject {
         }
     }
 
-    /**
-     * Searches file indicated by path first in src/main/resources (so it works
-     * even when developing), then in proper classpath resources. If file is
-     * found it is returned, otherwise an exception is thrown.
-     *
-     * @throws NotFoundException if path can't be found.
-     */
-    private static File findResource(String path) {
-        File fileFromPath = new File("src/main/resources" + path);
-
-        if (fileFromPath.exists()) {
-            return fileFromPath;
-        }
-
-        LOG.log(Level.INFO, "Can''t find file {0}", fileFromPath.getAbsolutePath());
-
-        URL resourceUrl = JedocProject.class.getResource(path);
-        if (resourceUrl == null) {
-            throw new NotFoundException("Can't find path in resources! " + path);
-        }
-        String resourcePath = resourceUrl.getFile();
-        LOG.log(Level.INFO, "Found file in {0}", resourcePath);
-        return new File(resourcePath);
-    }
-
     static String programLogoName(String repoName) {
         return repoName + "-logo-200px.png";
     }
@@ -165,7 +154,8 @@ public class JedocProject {
         String sourceMdString;
         try {
             sourceMdString = FileUtils.readFileToString(sourceMdFile);
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             throw new RuntimeException("Couldn't read source md file!", ex);
         }
 
@@ -176,12 +166,16 @@ public class JedocProject {
                 .replaceAll("#\\{majorMinorVersion}", Jedocs.majorMinor(version))
                 .replaceAll("#\\{repoRelease}", Jedocs.repoRelease(repoOrganization, repoName, version));
 
-        File skeletonFile = findResource("/skeleton.html");
-
+        
+        
         String skeletonString;
         try {
-            skeletonString = FileUtils.readFileToString(skeletonFile);
-        } catch (Exception ex) {
+            StringWriter writer = new StringWriter();
+            InputStream stream = Jedocs.findResourceStream("/skeleton.html");
+            IOUtils.copy(stream, writer, "UTF-8");
+            skeletonString = writer.toString();            
+        }
+        catch (Exception ex) {
             throw new RuntimeException("Couldn't read skeleton file!", ex);
         }
 
@@ -293,7 +287,7 @@ public class JedocProject {
         } else {
             skeleton.$("#jedoc-internal-sidebar").text("");
         }
-        if (prependedPath.length() == 0){
+        if (prependedPath.length() == 0) {
             skeleton.$("#jedoc-sidebar-managed-block").css("display", "none");
         }
 
@@ -331,7 +325,8 @@ public class JedocProject {
 
         try {
             FileUtils.write(outputFile, skeleton.html());
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             throw new RuntimeException("Couldn't write into " + outputFile.getAbsolutePath() + "!", ex);
         }
 
@@ -392,9 +387,9 @@ public class JedocProject {
                 version
         );
         dirWalker.process();
-        
+
         copyJavadoc(version);
-        
+
     }
 
     /**
@@ -413,13 +408,14 @@ public class JedocProject {
         try {
             FileUtils.deleteDirectory(targetLatestDocsDir);
             FileUtils.copyDirectory(targetVersionDir(version), targetLatestDocsDir);
-        } catch (Throwable tr) {
+        }
+        catch (Throwable tr) {
             throw new RuntimeException("Error while creating latest docs directory ", tr);
         }
 
     }
 
-    public void generateSite() throws IOException {
+    public void generateSite() {
 
         LOG.log(Level.INFO, "Fetching {0}/{1} tags.", new Object[]{repoOrganization, repoName});
         repoTags = Jedocs.fetchTags(repoOrganization, repoName);
@@ -427,8 +423,9 @@ public class JedocProject {
 
         try {
             pom = reader.read(new FileInputStream(new File(sourceRepoDir, "pom.xml")));
-        } catch (Throwable tr) {
-            throw new RuntimeException("Error while reading pom!", tr);
+        }
+        catch (Exception ex) {
+            throw new RuntimeException("Error while reading pom!", ex);
         }
 
         SemVersion snapshotVersion = SemVersion.of(pom.getVersion()).withPreReleaseVersion("");
@@ -451,7 +448,8 @@ public class JedocProject {
             RepositoryTag releaseTag;
             try {
                 releaseTag = Jedocs.find(repoName, curBranchVersion.getMajor(), curBranchVersion.getMinor(), repoTags);
-            } catch (NotFoundException ex) {
+            }
+            catch (NotFoundException ex) {
                 throw new RuntimeException("Current branch " + curBranch + " does not correspond to any released version!", ex);
             }
             SemVersion tagVersion = Jedocs.version(repoName, releaseTag.getName());
@@ -469,36 +467,39 @@ public class JedocProject {
              }
              */
 
+        }       
+        
+        Jedocs.copyDirFromResource(Jedocs.class, "/website-template", pagesDir);
+
+        try {
+
+            /*
+             File userdocImgDir = new File(sourceDocsDir, "img");
+             File targetImgDir = new File(pagesDir, "img");
+             LOG.log(Level.INFO, "Merging img dir: {0}", userdocImgDir.getAbsolutePath());
+             LOG.log(Level.INFO, "        in directory: {0}", targetImgDir.getAbsolutePath());
+
+             FileUtils.copyDirectory(userdocImgDir, targetImgDir);
+             */
+            File targetImgDir = new File(pagesDir, "img");
+
+            File programLogo = programLogo(sourceDocsDir(), repoName);
+
+            if (programLogo.exists()) {
+                LOG.log(Level.INFO, "Found program logo: {0}", programLogo.getAbsolutePath());
+                LOG.log(Level.INFO, "      copying it into dir {0}", targetImgDir.getAbsolutePath());
+
+                FileUtils.copyFile(programLogo, new File(targetImgDir, programLogoName(repoName)));
+            }
+
+            FileUtils.copyFile(new File(sourceRepoDir, "LICENSE.txt"), new File(pagesDir, "LICENSE.txt"));
+
+        }
+        catch (Exception ex) {
+            throw new RuntimeException("Error while copying files!", ex);
         }
 
-        File websiteTemplateDir = findResource("/website-template");
-
-        LOG.log(Level.INFO, "Copying website template dir: {0}", websiteTemplateDir.getAbsolutePath());
-        LOG.log(Level.INFO, "        to directory: {0}", pagesDir.getAbsolutePath());
-
-        FileUtils.copyDirectory(websiteTemplateDir, pagesDir);
-
-        /*
-         File userdocImgDir = new File(sourceDocsDir, "img");
-         File targetImgDir = new File(pagesDir, "img");
-         LOG.log(Level.INFO, "Merging img dir: {0}", userdocImgDir.getAbsolutePath());
-         LOG.log(Level.INFO, "        in directory: {0}", targetImgDir.getAbsolutePath());
-
-         FileUtils.copyDirectory(userdocImgDir, targetImgDir);
-         */
-        File targetImgDir = new File(pagesDir, "img");
-
-        File programLogo = programLogo(sourceDocsDir(), repoName);
-        if (programLogo.exists()) {
-            LOG.log(Level.INFO, "Found program logo: {0}", programLogo.getAbsolutePath());
-            LOG.log(Level.INFO, "      copying it into dir {0}", targetImgDir.getAbsolutePath());
-
-            FileUtils.copyFile(programLogo, new File(targetImgDir, programLogoName(repoName)));
-        }
-
-        FileUtils.copyFile(new File(sourceRepoDir, "LICENSE.txt"), new File(pagesDir, "LICENSE.txt"));
-
-        LOG.info("\n\nSite is now browsable at " + pagesDir.getAbsolutePath() + "\n\n");
+        LOG.log(Level.INFO, "\n\nSite is now browsable at {0}\n\n", pagesDir.getAbsolutePath());
     }
 
     private String makeSidebar(String contentFromWikiHtml) {
@@ -512,12 +513,12 @@ public class JedocProject {
              .attr("href","#" + sourceHeaderLink.attr("id"))
              .text(sourceHeaderLink.text()); */
         }
-        
+
         return ret;
     }
 
     /**
-     * Copies javadoc into target website according to the artifact version.     
+     * Copies javadoc into target website according to the artifact version.
      */
     private void copyJavadoc(SemVersion version) {
         File targetJavadoc = targetJavadocDir(version);
@@ -531,13 +532,14 @@ public class JedocProject {
                 try {
                     LOG.log(Level.INFO, "Now copying Javadoc from {0} to {1}", new Object[]{sourceJavadoc.getAbsolutePath(), targetJavadoc.getAbsolutePath()});
                     FileUtils.copyDirectory(sourceJavadoc, targetJavadoc);
-                } catch (Throwable tr) {
+                }
+                catch (Throwable tr) {
                     throw new RuntimeException("Error while copying Javadoc from " + sourceJavadoc.getAbsolutePath() + " to " + targetJavadoc.getAbsolutePath());
                 }
             }
         } else {
             File jardocs = Jedocs.fetchJavadoc(pom.getGroupId(), pom.getArtifactId(), version);
-            Jedocs.extractJar(jardocs, targetJavadocDir(version));
+            Jedocs.copyDirFromJar(jardocs, targetJavadocDir(version), "");
         }
 
     }

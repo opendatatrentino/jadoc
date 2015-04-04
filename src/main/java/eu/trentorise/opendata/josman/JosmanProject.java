@@ -153,12 +153,12 @@ public class JosmanProject {
             throw new RuntimeException("Couldn't read source md file!", ex);
         }
 
-        Josmans.checkNotMeaningful(sourceMdString, "Invalid source md file!");
+        JosUtils.checkNotMeaningful(sourceMdString, "Invalid source md file!");
 
         String filteredSourceMdString = sourceMdString
                 .replaceAll("#\\{version}", version.toString())
-                .replaceAll("#\\{majorMinorVersion}", Josmans.majorMinor(version))
-                .replaceAll("#\\{repoRelease}", Josmans.repoRelease(repoOrganization, repoName, version))
+                .replaceAll("#\\{majorMinorVersion}", JosUtils.majorMinor(version))
+                .replaceAll("#\\{repoRelease}", JosUtils.repoRelease(repoOrganization, repoName, version))
                 .replaceAll("jedoc", "josman"); // for legacy compat 
 
         
@@ -166,7 +166,7 @@ public class JosmanProject {
         String skeletonString;
         try {
             StringWriter writer = new StringWriter();
-            InputStream stream = Josmans.findResourceStream("/skeleton.html");
+            InputStream stream = JosUtils.findResourceStream("/skeleton.html");
             IOUtils.copy(stream, writer, "UTF-8");
             skeletonString = writer.toString();            
         }
@@ -197,36 +197,36 @@ public class JosmanProject {
                     public boolean onNode(Jerry arg0, int arg1) {
                         String href = arg0.attr("href");
                         if (href.startsWith(prependedPath + "src")) {
-                            arg0.attr("href", href.replace(prependedPath + "src", Josmans.repoRelease(repoOrganization, repoName, version) + "/src"));
+                            arg0.attr("href", href.replace(prependedPath + "src", JosUtils.repoRelease(repoOrganization, repoName, version) + "/src"));
                             return true;
                         }
                         if (href.endsWith(".md")) {
-                            arg0.attr("href", Josmans.htmlizePath(href));
+                            arg0.attr("href", JosUtils.htmlizePath(href));
                             return true;
                         }
 
                         if (href.equals(prependedPath + "../../wiki")) {
-                            arg0.attr("href", href.replace(prependedPath + "../../wiki", Josmans.repoWiki(repoOrganization, repoName)));
+                            arg0.attr("href", href.replace(prependedPath + "../../wiki", JosUtils.repoWiki(repoOrganization, repoName)));
                             return true;
                         }
 
                         if (href.equals(prependedPath + "../../issues")) {
-                            arg0.attr("href", href.replace(prependedPath + "../../issues", Josmans.repoIssues(repoOrganization, repoName)));
+                            arg0.attr("href", href.replace(prependedPath + "../../issues", JosUtils.repoIssues(repoOrganization, repoName)));
                             return true;
                         }
 
                         if (href.equals(prependedPath + "../../milestones")) {
-                            arg0.attr("href", href.replace(prependedPath + "../../milestones", Josmans.repoMilestones(repoOrganization, repoName)));
+                            arg0.attr("href", href.replace(prependedPath + "../../milestones", JosUtils.repoMilestones(repoOrganization, repoName)));
                             return true;
                         }
 
                         if (OdtUtils.removeTrailingSlash(href).equals(DOCS_FOLDER)) {
-                            arg0.attr("href", Josmans.majorMinor(version) + "/index.html");
+                            arg0.attr("href", JosUtils.majorMinor(version) + "/index.html");
                             return true;
                         }
 
                         if (href.startsWith(DOCS_FOLDER + "/")) {
-                            arg0.attr("href", Josmans.majorMinor(version) + href.substring(DOCS_FOLDER.length()));
+                            arg0.attr("href", JosUtils.majorMinor(version) + href.substring(DOCS_FOLDER.length()));
                             return true;
                         }
 
@@ -242,7 +242,7 @@ public class JosmanProject {
                     public boolean onNode(Jerry arg0, int arg1) {
                         String src = arg0.attr("src");
                         if (src.startsWith(DOCS_FOLDER + "/")) {
-                            arg0.attr("src", Josmans.majorMinor(version) + src.substring(DOCS_FOLDER.length()));
+                            arg0.attr("src", JosUtils.majorMinor(version) + src.substring(DOCS_FOLDER.length()));
                             return true;
                         }
                         return true;
@@ -262,8 +262,8 @@ public class JosmanProject {
             skeleton.$("#josman-program-logo-link").css("display", "none");
         }
 
-        skeleton.$("#josman-wiki").attr("href", Josmans.repoWiki(repoOrganization, repoName));
-        skeleton.$("#josman-project").attr("href", Josmans.repoUrl(repoOrganization, repoName));
+        skeleton.$("#josman-wiki").attr("href", JosUtils.repoWiki(repoOrganization, repoName));
+        skeleton.$("#josman-project").attr("href", JosUtils.repoUrl(repoOrganization, repoName));
 
         skeleton.$("#josman-home").attr("href", prependedPath + "index.html");
         if (prependedPath.length() == 0) {
@@ -273,7 +273,7 @@ public class JosmanProject {
         // cleaning example versions
         skeleton.$(".josman-version-tab-header").remove();
 
-        List<RepositoryTag> tags = new ArrayList(Josmans.filterTags(repoName, repoTags).values());
+        List<RepositoryTag> tags = new ArrayList(JosUtils.filterTags(repoName, repoTags).values());
         Collections.reverse(tags);
 
         String sidebarString = makeSidebar(contentFromMdHtml);
@@ -291,7 +291,7 @@ public class JosmanProject {
         if (local) {
 
             if (tags.size() > 0) {
-                SemVersion ver = Josmans.version(repoName, tags.get(0).getName());
+                SemVersion ver = JosUtils.version(repoName, tags.get(0).getName());
                 if (version.getMajor() >= ver.getMajor()
                         && version.getMinor() >= ver.getMinor()) {
                     addVersionHeaderTag(skeleton, prependedPath, version, prependedPath.length() != 0);
@@ -306,7 +306,7 @@ public class JosmanProject {
             addVersionHeaderTag(skeleton, prependedPath, version, prependedPath.length() != 0);
             /*
              for (RepositoryTag tag : tags) {
-             SemVersion ver = Josmans.version(repoName, tag.getName());
+             SemVersion ver = JosUtils.version(repoName, tag.getName());
              addVersionHeaderTag(skeleton, prependedPath, ver, true);
              }
              throw new UnsupportedOperationException("repo tags are not supported yet!");
@@ -328,7 +328,7 @@ public class JosmanProject {
     }
 
     private static void addVersionHeaderTag(Jerry skeleton, String prependedPath, SemVersion version, boolean selected) {
-        String verShortName = Josmans.majorMinor(version);
+        String verShortName = JosUtils.majorMinor(version);
         String classSelected = selected ? "josman-tag-selected" : "";
         skeleton.$("#josman-usage").append(
                 "<a class='josman-version-tab-header " + classSelected + "' href='"
@@ -413,7 +413,7 @@ public class JosmanProject {
     public void generateSite() {
 
         LOG.log(Level.INFO, "Fetching {0}/{1} tags.", new Object[]{repoOrganization, repoName});
-        repoTags = Josmans.fetchTags(repoOrganization, repoName);
+        repoTags = JosUtils.fetchTags(repoOrganization, repoName);
         MavenXpp3Reader reader = new MavenXpp3Reader();
 
         try {
@@ -435,36 +435,36 @@ public class JosmanProject {
             if (repoTags.isEmpty()) {
                 throw new NotFoundException("There are no tags at all in the repository!!");
             }
-            SemVersion latestPublishedVersion = Josmans.latestVersion(repoName, repoTags);
+            SemVersion latestPublishedVersion = JosUtils.latestVersion(repoName, repoTags);
             LOG.log(Level.INFO, "Processing published version");
             buildIndex(latestPublishedVersion);
-            String curBranch = Josmans.readRepoCurrentBranch(sourceRepoDir);
-            SemVersion curBranchVersion = Josmans.versionFromBranchName(curBranch);
+            String curBranch = JosUtils.readRepoCurrentBranch(sourceRepoDir);
+            SemVersion curBranchVersion = JosUtils.versionFromBranchName(curBranch);
             RepositoryTag releaseTag;
             try {
-                releaseTag = Josmans.find(repoName, curBranchVersion.getMajor(), curBranchVersion.getMinor(), repoTags);
+                releaseTag = JosUtils.find(repoName, curBranchVersion.getMajor(), curBranchVersion.getMinor(), repoTags);
             }
             catch (NotFoundException ex) {
                 throw new RuntimeException("Current branch " + curBranch + " does not correspond to any released version!", ex);
             }
-            SemVersion tagVersion = Josmans.version(repoName, releaseTag.getName());
+            SemVersion tagVersion = JosUtils.version(repoName, releaseTag.getName());
             processDocsDir(tagVersion);
             createLatestDocsDirectory(tagVersion);
             LOG.warning("TODO - PROCESSING ONLY CURRENT BRANCH, NEED TO PROCESS ALL BRANCHES INSTEAD!");
             /*
-             SortedMap<String, RepositoryTag> filteredTags = Josmans.filterTags(repoName, repoTags);
+             SortedMap<String, RepositoryTag> filteredTags = JosUtils.filterTags(repoName, repoTags);
 
              for (RepositoryTag tag : filteredTags.values()) {
 
              LOG.log(Level.INFO, "Processing release tag {0}", tag.getName());
-             processDir(Josmans.version(repoName, tag.getName()));
+             processDir(JosUtils.version(repoName, tag.getName()));
 
              }
              */
 
         }       
         
-        Josmans.copyDirFromResource(Josmans.class, "/website-template", pagesDir);
+        JosUtils.copyDirFromResource(JosUtils.class, "/website-template", pagesDir);
 
         try {
 
@@ -533,8 +533,8 @@ public class JosmanProject {
                 }
             }
         } else {
-            File jardocs = Josmans.fetchJavadoc(pom.getGroupId(), pom.getArtifactId(), version);
-            Josmans.copyDirFromJar(jardocs, targetJavadocDir(version), "");
+            File jardocs = JosUtils.fetchJavadoc(pom.getGroupId(), pom.getArtifactId(), version);
+            JosUtils.copyDirFromJar(jardocs, targetJavadocDir(version), "");
         }
 
     }

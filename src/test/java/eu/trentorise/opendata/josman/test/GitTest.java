@@ -1,18 +1,38 @@
 package eu.trentorise.opendata.josman.test;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.collect.ImmutableList;
 import eu.trentorise.opendata.commons.OdtConfig;
-import eu.trentorise.opendata.josman.Josmans;
+import static eu.trentorise.opendata.commons.OdtUtils.checkNotEmpty;
+import eu.trentorise.opendata.josman.JosUtils;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringReader;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.egit.github.core.RepositoryTag;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.errors.AmbiguousObjectException;
+import org.eclipse.jgit.errors.IncorrectObjectTypeException;
+import org.eclipse.jgit.errors.MissingObjectException;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.FileMode;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.DepthWalk.RevWalk;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.treewalk.TreeWalk;
+import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -23,6 +43,7 @@ import org.junit.Test;
 public class GitTest {
 
     private static final Logger LOG = Logger.getLogger(GitTest.class.getName());
+    private static int DEPTH = 8000;
 
     @BeforeClass
     public static void beforeClass() {
@@ -59,8 +80,8 @@ public class GitTest {
      */
     @Test
     public void testEgit() throws IOException {
-        List<RepositoryTag> tags = Josmans.fetchTags("opendatatrentino", "josman");
-        SortedMap<String, RepositoryTag> filteredTags = Josmans.filterTags("josman", tags);
+        List<RepositoryTag> tags = JosUtils.fetchTags("opendatatrentino", "josman");
+        SortedMap<String, RepositoryTag> filteredTags = JosUtils.filterTags("josman", tags);
         for (String tagName : filteredTags.keySet()) {
             RepositoryTag tag = filteredTags.get(tagName);
             LOG.info(tag.getName());
@@ -83,6 +104,207 @@ public class GitTest {
         LOG.log(Level.INFO, "Having repository: {0}", repo.getDirectory().getAbsolutePath());
 
         LOG.log(Level.INFO, "current branch: {0}", repo.getBranch());
+    }
+
+    @Test
+    public void testWalkRepo() throws IOException {
+        File repoFile = createJosmanSampleRepo();
+
+        FileRepositoryBuilder builder = new FileRepositoryBuilder();
+        Repository repo = builder.setGitDir(repoFile)
+                .readEnvironment() // scan environment GIT_* variables
+                .findGitDir() // scan up the file system tree
+                .build();
+
+        // find the Tree for current HEAD
+        RevTree tree = getTree(repo);
+
+        //printFile(repo, tree, "*a.*");
+        printDirectory(repo, "master", "src");
+
+        // there is also FileMode.SYMLINK for symbolic links, but this is not handled here yet
+        repo.close();
+    }
+
+    private static RevTree getTree(Repository repository) throws AmbiguousObjectException, IncorrectObjectTypeException,
+            IOException, MissingObjectException {
+        ObjectId lastCommitId = repository.resolve(Constants.HEAD);
+
+        // a RevWalk allows to walk over commits based on some filtering
+        RevWalk revWalk = new RevWalk(repository, DEPTH);
+        RevCommit commit = revWalk.parseCommit(lastCommitId);
+
+        System.out.println("Time of commit (seconds since epoch): " + commit.getCommitTime());
+
+        // and using commit's tree find the path
+        RevTree tree = commit.getTree();
+        System.out.println("Having tree: " + tree);
+        return tree;
+    }
+
+    private static void printFile(Repository repository, RevTree tree, String filter) {
+        try {
+            // now try to find a specific file
+            TreeWalk treeWalk = new TreeWalk(repository);
+            treeWalk.addTree(tree);
+            treeWalk.setRecursive(false);
+            treeWalk.setFilter(PathFilter.create(filter));
+            if (!treeWalk.next()) {
+                throw new IllegalStateException("Did not find expected file " + filter);
+            }
+
+            // FileMode specifies the type of file, FileMode.REGULAR_FILE for normal file, FileMode.EXECUTABLE_FILE for executable bit
+// set
+            FileMode fileMode = treeWalk.getFileMode(0);
+            ObjectLoader loader = repository.open(treeWalk.getObjectId(0));
+            System.out.println(treeWalk.getPathString() + ": " + getFileMode(fileMode) + ", type: " + fileMode.getObjectType() + ", mode: " + fileMode
+                    + " size: " + loader.getSize());
+        }
+        catch (Exception ex) {
+            throw new RuntimeException("Error while walkinf files", ex);
+        }
+    }
+
+    private static void printDirectory(Repository repo, String revStr, String prefix) {
+        checkNotNull(repo);
+        checkNotNull(prefix);
+        checkNotEmpty(revStr, "invalid revisiong string!");
+        try {
+            // find the HEAD
+            ObjectId lastCommitId = repo.resolve(revStr);
+
+            // a RevWalk allows to walk over commits based on some filtering that is defined
+            RevWalk revWalk = new RevWalk(repo, DEPTH);
+            RevCommit commit = revWalk.parseCommit(lastCommitId);
+            // and using commit's tree find the path
+            RevTree tree = commit.getTree();
+            LOG.log(Level.INFO, "Having tree: {0}", tree);
+            // look at directory, this has FileMode.TREE
+            TreeWalk treeWalk = new TreeWalk(repo);
+            treeWalk.addTree(tree);
+            treeWalk.setRecursive(true);
+
+            //treeWalk.setFilter(PathFilter.create(prefix)); damn this seems to only do exact match... 
+            while (treeWalk.next()) {
+                // FileMode now indicates that this is a directory, i.e. FileMode.TREE.equals(fileMode) holds true
+                String pathString = treeWalk.getPathString();
+
+                if (pathString.startsWith(prefix)) {
+                    FileMode fileMode = treeWalk.getFileMode(0);
+                    System.out.println(pathString + ":  " + getFileMode(fileMode) + ", type: " + fileMode.getObjectType() + ", mode: " + fileMode);
+
+                    ObjectId objectId = treeWalk.getObjectId(0);
+                    ObjectLoader loader = repo.open(objectId);
+
+                    InputStream stream = loader.openStream();
+
+                    File outputFile = File.createTempFile("bla", "bla");
+                    FileUtils.copyInputStreamToFile(stream, outputFile);
+                    stream.close();
+
+                    System.out.println("content:\n" + FileUtils.readFileToString(outputFile));
+
+                }
+            }
+        }
+
+        catch (Exception ex) {
+            throw new RuntimeException("Error while walking directory!", ex);
+        }
+    }
+
+    private static String getFileMode(FileMode fileMode) {
+        if (fileMode.equals(FileMode.EXECUTABLE_FILE)) {
+            return "Executable File";
+        } else if (fileMode.equals(FileMode.REGULAR_FILE)) {
+            return "Normal File";
+        } else if (fileMode.equals(FileMode.TREE)) {
+            return "Directory";
+        } else if (fileMode.equals(FileMode.SYMLINK)) {
+            return "Symlink";
+        } else {
+            // there are a few others, see FileMode javadoc for details
+            throw new IllegalArgumentException("Unknown type of file encountered: " + fileMode);
+        }
+    }
+
+    private static File createFile(Repository repository, String filePath) {
+
+        try {
+            // create the file
+
+            File targetFile = new File(repository.getDirectory().getParent(), filePath);
+            File parent = targetFile.getParentFile();
+            if (!parent.exists() && !parent.mkdirs()) {
+                throw new IllegalStateException("Couldn't create dir: " + parent);
+            }
+
+            targetFile.createNewFile();
+
+            PrintWriter pw = new PrintWriter(targetFile);
+            pw.println("hello");
+            pw.close();
+
+            // run the add-call
+            new Git(repository).add()
+                    .addFilepattern(filePath)
+                    .call();
+
+            return targetFile;
+
+        }
+        catch (Exception ex) {
+            throw new RuntimeException("Error while creating file!", ex);
+        }
+    }
+
+    private static ImmutableList<File> createFiles(Repository repository, String... filePaths) {
+        ImmutableList.Builder<File> retb = ImmutableList.builder();
+        for (String filePath : filePaths) {
+            retb.add(createFile(repository, filePath));
+        }
+        return retb.build();
+    }
+
+    /**
+     * Creates a sample josman repo
+     *
+     *
+     * @return
+     * @throws IOException
+     * @throws GitAPIException
+     */
+    private static File createJosmanSampleRepo() {
+        Repository repository;
+        try {
+            repository = CookbookHelper.createNewRepository();
+
+            LOG.log(Level.INFO, "Temporary repository at {0}", repository.getDirectory());
+
+            createFiles(repository, "docs/README.md",
+                    "docs/CHANGES.md",
+                    "docs/img/a.jpg",
+                    "src/main/java/a.java",
+                    "src/main/java/b.java",
+                    "README.md",
+                    "LICENSE.txt"
+            );
+
+            // and then commit the changes
+            new Git(repository).commit()
+                    .setMessage("Added test files")
+                    .call();
+
+            File dir = repository.getDirectory();
+
+            repository.close();
+
+            return dir;
+        }
+        catch (Exception ex) {
+            throw new RuntimeException("Error while creating new repo!", ex);
+        }
+
     }
 
     private static File createSampleGitRepo() throws IOException, GitAPIException {
@@ -111,6 +333,7 @@ public class GitTest {
         repository.close();
 
         return dir;
+
     }
 
     private static class CookbookHelper {

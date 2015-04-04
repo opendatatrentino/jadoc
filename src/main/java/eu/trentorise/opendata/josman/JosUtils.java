@@ -41,9 +41,9 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
  *
  * @author David Leoni
  */
-public class Josmans {
+public class JosUtils {
 
-    private static final Logger LOG = Logger.getLogger(Josmans.class.getName());
+    private static final Logger LOG = Logger.getLogger(JosUtils.class.getName());
 
     public static final int CONNECTION_TIMEOUT = 1000;
 
@@ -283,11 +283,11 @@ public class Josmans {
 
     public static SemVersion latestVersion(String repoName, List<RepositoryTag> tags) {
         OdtUtils.checkNotEmpty(tags, "Invalid repository tags!");
-        SortedMap<String, RepositoryTag> filteredTags = Josmans.filterTags(repoName, tags);
+        SortedMap<String, RepositoryTag> filteredTags = JosUtils.filterTags(repoName, tags);
         if (filteredTags.isEmpty()) {
             throw new NotFoundException("Couldn't find any released version!");
         }
-        return Josmans.version(repoName, filteredTags.lastKey());
+        return JosUtils.version(repoName, filteredTags.lastKey());
     }
 
     /**

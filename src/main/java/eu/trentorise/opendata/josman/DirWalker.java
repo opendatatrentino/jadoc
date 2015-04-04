@@ -89,7 +89,7 @@ public class DirWalker extends DirectoryWalker {
         File target;
         
         if (file.getName().endsWith(".md")) {
-            target = new File(destinationRoot, Josmans.htmlizePath(targetRelPath));
+            target = new File(destinationRoot, JosUtils.htmlizePath(targetRelPath));
             LOG.log(Level.INFO, "Creating file {0}", target.getAbsolutePath());
             if (target.exists()) {
                 throw new DirWalkerException("Target file already exists!", file, target);

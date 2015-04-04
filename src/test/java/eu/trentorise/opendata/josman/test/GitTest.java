@@ -27,8 +27,7 @@ public class GitTest {
     @BeforeClass
     public static void beforeClass() {
         OdtConfig.init(GitTest.class);
-    }    
-        
+    }
 
     // TODO add test methods here.
     // The methods must be annotated with annotation @Test. For example:
@@ -70,18 +69,19 @@ public class GitTest {
     }
 
     @Test
-    public void readRepo() throws IOException {
+    public void testReadRepo() throws IOException, GitAPIException {
+        File repoFile = createSampleGitRepo();
+
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
-        Repository repo = builder.setGitDir(new File(".git"))
+        Repository repo = builder.setGitDir(repoFile)
                 .readEnvironment() // scan environment GIT_* variables
                 .findGitDir() // scan up the file system tree
                 .build();
 
-        
-        LOG.log(Level.INFO,"directory: {0}", repo.getDirectory().getAbsolutePath());
-        
+        LOG.log(Level.INFO, "directory: {0}", repo.getDirectory().getAbsolutePath());
+
         LOG.log(Level.INFO, "Having repository: {0}", repo.getDirectory().getAbsolutePath());
-  
+
         LOG.log(Level.INFO, "current branch: {0}", repo.getBranch());
     }
 
@@ -113,28 +113,28 @@ public class GitTest {
         return dir;
     }
 
-}
+    private static class CookbookHelper {
 
-class CookbookHelper {
+        public static Repository openJGitCookbookRepository() throws IOException {
+            FileRepositoryBuilder builder = new FileRepositoryBuilder();
+            Repository repository = builder
+                    .readEnvironment() // scan environment GIT_* variables
+                    .findGitDir() // scan up the file system tree
+                    .build();
+            return repository;
+        }
 
-    public static Repository openJGitCookbookRepository() throws IOException {
-        FileRepositoryBuilder builder = new FileRepositoryBuilder();
-        Repository repository = builder
-                .readEnvironment() // scan environment GIT_* variables
-                .findGitDir() // scan up the file system tree
-                .build();
-        return repository;
+        public static Repository createNewRepository() throws IOException {
+            // prepare a new folder
+            File localPath = File.createTempFile("TestGitRepository", "");
+            localPath.delete();
+
+            // create the directory
+            Repository repository = FileRepositoryBuilder.create(new File(localPath, ".git"));
+            repository.create();
+
+            return repository;
+        }
     }
 
-    public static Repository createNewRepository() throws IOException {
-        // prepare a new folder
-        File localPath = File.createTempFile("TestGitRepository", "");
-        localPath.delete();
-
-        // create the directory
-        Repository repository = FileRepositoryBuilder.create(new File(localPath, ".git"));
-        repository.create();
-
-        return repository;
-    }
 }

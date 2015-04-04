@@ -1,17 +1,13 @@
 package eu.trentorise.opendata.josman;
 
-import com.google.common.base.Charsets;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import com.google.common.io.Resources;
 import eu.trentorise.opendata.commons.NotFoundException;
 import eu.trentorise.opendata.commons.OdtUtils;
 import static eu.trentorise.opendata.commons.OdtUtils.checkNotEmpty;
 import eu.trentorise.opendata.commons.SemVersion;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,10 +22,8 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.eclipse.egit.github.core.RepositoryTag;
 import eu.trentorise.opendata.josman.org.pegdown.Parser;
 import eu.trentorise.opendata.josman.org.pegdown.PegDownProcessor;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.StringWriter;
-import java.net.MalformedURLException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.IOUtils;
@@ -164,7 +158,8 @@ public class JosmanProject {
         String filteredSourceMdString = sourceMdString
                 .replaceAll("#\\{version}", version.toString())
                 .replaceAll("#\\{majorMinorVersion}", Josmans.majorMinor(version))
-                .replaceAll("#\\{repoRelease}", Josmans.repoRelease(repoOrganization, repoName, version));
+                .replaceAll("#\\{repoRelease}", Josmans.repoRelease(repoOrganization, repoName, version))
+                .replaceAll("jedoc", "josman"); // for legacy compat 
 
         
         

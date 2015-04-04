@@ -16,14 +16,14 @@
  * limitations under the License.
  */
 
-package eu.trentorise.opendata.jedoc.org.pegdown.plugins;
+package eu.trentorise.opendata.josman.org.pegdown.plugins;
 
-import eu.trentorise.opendata.jedoc.org.pegdown.Printer;
-import eu.trentorise.opendata.jedoc.org.pegdown.ast.Node;
-import eu.trentorise.opendata.jedoc.org.pegdown.ast.Visitor;
+import eu.trentorise.opendata.josman.org.pegdown.Printer;
+import eu.trentorise.opendata.josman.org.pegdown.ast.Node;
+import eu.trentorise.opendata.josman.org.pegdown.ast.Visitor;
 
 /**
- * A plugin for the {@link eu.trentorise.opendata.jedoc.org.pegdown.ToHtmlSerializer}
+ * A plugin for the {@link eu.trentorise.opendata.josman.org.pegdown.ToHtmlSerializer}
  */
 public interface ToHtmlSerializerPlugin {
 

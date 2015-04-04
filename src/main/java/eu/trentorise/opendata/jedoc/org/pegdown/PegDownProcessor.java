@@ -16,14 +16,14 @@
  * limitations under the License.
  */
 
-package eu.trentorise.opendata.jedoc.org.pegdown;
+package eu.trentorise.opendata.josman.org.pegdown;
 
 import java.util.Collections;
 import java.util.Map;
 
 import org.parboiled.Parboiled;
-import eu.trentorise.opendata.jedoc.org.pegdown.ast.RootNode;
-import eu.trentorise.opendata.jedoc.org.pegdown.plugins.PegDownPlugins;
+import eu.trentorise.opendata.josman.org.pegdown.ast.RootNode;
+import eu.trentorise.opendata.josman.org.pegdown.plugins.PegDownPlugins;
 
 /**
  * A clean and lightweight Markdown-to-HTML filter based on a PEG parser implemented with parboiled.
@@ -53,7 +53,7 @@ public class PegDownProcessor {
     }
 
     /**
-     * Creates a new processor instance with the given {@link eu.trentorise.opendata.jedoc.org.pegdown.Extensions} and the default parsing timeout.
+     * Creates a new processor instance with the given {@link eu.trentorise.opendata.josman.org.pegdown.Extensions} and the default parsing timeout.
      *
      * @param options the flags of the extensions to enable as a bitmask
      */
@@ -62,7 +62,7 @@ public class PegDownProcessor {
     }
 
     /**
-     * Creates a new processor instance with the given {@link eu.trentorise.opendata.jedoc.org.pegdown.Extensions} and parsing timeout.
+     * Creates a new processor instance with the given {@link eu.trentorise.opendata.josman.org.pegdown.Extensions} and parsing timeout.
      *
      * @param options the flags of the extensions to enable as a bitmask
      * @param maxParsingTimeInMillis the parsing timeout
@@ -72,7 +72,7 @@ public class PegDownProcessor {
     }
 
     /**
-     * Creates a new processor instance with the given {@link eu.trentorise.opendata.jedoc.org.pegdown.Extensions} and plugins.
+     * Creates a new processor instance with the given {@link eu.trentorise.opendata.josman.org.pegdown.Extensions} and plugins.
      *
      * @param options the flags of the extensions to enable as a bitmask
      * @param plugins the plugins to use
@@ -82,7 +82,7 @@ public class PegDownProcessor {
     }
 
     /**
-     * Creates a new processor instance with the given {@link eu.trentorise.opendata.jedoc.org.pegdown.Extensions}, parsing timeout and plugins.
+     * Creates a new processor instance with the given {@link eu.trentorise.opendata.josman.org.pegdown.Extensions}, parsing timeout and plugins.
      *
      * @param options the flags of the extensions to enable as a bitmask
      * @param maxParsingTimeInMillis the parsing timeout

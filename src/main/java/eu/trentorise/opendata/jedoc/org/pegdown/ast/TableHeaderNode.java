@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package eu.trentorise.opendata.jedoc.org.pegdown.ast;
+package eu.trentorise.opendata.josman.org.pegdown.ast;
 
 public class TableHeaderNode extends SuperNode {
     

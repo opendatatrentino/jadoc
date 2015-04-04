@@ -1,16 +1,16 @@
-package eu.trentorise.opendata.jedoc.org.pegdown;
+package eu.trentorise.opendata.josman.org.pegdown;
 
-import eu.trentorise.opendata.jedoc.org.pegdown.ast.AnchorLinkNode;
-import eu.trentorise.opendata.jedoc.org.pegdown.ast.RefLinkNode;
-import eu.trentorise.opendata.jedoc.org.pegdown.ast.RefImageNode;
-import eu.trentorise.opendata.jedoc.org.pegdown.ast.WikiLinkNode;
-import eu.trentorise.opendata.jedoc.org.pegdown.ast.AutoLinkNode;
-import eu.trentorise.opendata.jedoc.org.pegdown.ast.MailLinkNode;
-import eu.trentorise.opendata.jedoc.org.pegdown.ast.ExpLinkNode;
-import eu.trentorise.opendata.jedoc.org.pegdown.ast.ExpImageNode;
+import eu.trentorise.opendata.josman.org.pegdown.ast.AnchorLinkNode;
+import eu.trentorise.opendata.josman.org.pegdown.ast.RefLinkNode;
+import eu.trentorise.opendata.josman.org.pegdown.ast.RefImageNode;
+import eu.trentorise.opendata.josman.org.pegdown.ast.WikiLinkNode;
+import eu.trentorise.opendata.josman.org.pegdown.ast.AutoLinkNode;
+import eu.trentorise.opendata.josman.org.pegdown.ast.MailLinkNode;
+import eu.trentorise.opendata.josman.org.pegdown.ast.ExpLinkNode;
+import eu.trentorise.opendata.josman.org.pegdown.ast.ExpImageNode;
 import org.parboiled.common.StringUtils;
 
-import static eu.trentorise.opendata.jedoc.org.pegdown.FastEncoder.*;
+import static eu.trentorise.opendata.josman.org.pegdown.FastEncoder.*;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;

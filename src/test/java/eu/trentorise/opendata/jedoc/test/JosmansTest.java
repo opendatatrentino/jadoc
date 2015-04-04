@@ -1,7 +1,7 @@
-package eu.trentorise.opendata.jedoc.test;
+package eu.trentorise.opendata.josman.test;
 
 import eu.trentorise.opendata.commons.OdtConfig;
-import eu.trentorise.opendata.jedoc.Jedocs;
+import eu.trentorise.opendata.josman.Josmans;
 import java.util.logging.Logger;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -10,41 +10,41 @@ import org.junit.Test;
  *
  * @author David Leoni
  */
-public class JedocsTest {
+public class JosmansTest {
     
-        private static final Logger LOG = Logger.getLogger(JedocsTest.class.getName());
+        private static final Logger LOG = Logger.getLogger(JosmansTest.class.getName());
 
     @BeforeClass
     public static void beforeClass() {
-        OdtConfig.init(JedocsTest.class);
+        OdtConfig.init(JosmansTest.class);
     }   
     
     @Test
     public void testNotMeaningfulString(){
         
-        Jedocs.checkNotMeaningful(" a", "");
-        Jedocs.checkNotMeaningful(" a\n", "");
-        Jedocs.checkNotMeaningful(" a\t", "");
+        Josmans.checkNotMeaningful(" a", "");
+        Josmans.checkNotMeaningful(" a\n", "");
+        Josmans.checkNotMeaningful(" a\t", "");
         
         try {
-            Jedocs.checkNotMeaningful("", "");
+            Josmans.checkNotMeaningful("", "");
         } catch (IllegalArgumentException ex){
                 
         }
         
         try {
-            Jedocs.checkNotMeaningful(" ", "");
+            Josmans.checkNotMeaningful(" ", "");
         } catch (IllegalArgumentException ex){
                 
         }
         try {
-            Jedocs.checkNotMeaningful("\\t", "");
+            Josmans.checkNotMeaningful("\\t", "");
         } catch (IllegalArgumentException ex){
                 
         }
         
         try {
-            Jedocs.checkNotMeaningful("\\n", "");
+            Josmans.checkNotMeaningful("\\n", "");
         } catch (IllegalArgumentException ex){
                 
         }

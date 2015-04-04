@@ -1,4 +1,4 @@
-package eu.trentorise.opendata.jedoc.org.pegdown.ast;
+package eu.trentorise.opendata.josman.org.pegdown.ast;
 
 public abstract class AbstractNode implements Node {
     private int startIndex; 

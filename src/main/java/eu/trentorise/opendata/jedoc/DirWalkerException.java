@@ -1,4 +1,4 @@
-package eu.trentorise.opendata.jedoc;
+package eu.trentorise.opendata.josman;
 
 import java.io.File;
 import javax.annotation.Nullable;

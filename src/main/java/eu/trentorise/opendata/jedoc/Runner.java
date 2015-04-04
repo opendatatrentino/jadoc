@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.trentorise.opendata.jedoc;
+package eu.trentorise.opendata.josman;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -16,10 +16,10 @@ public class Runner {
     
      public static void main(String[] args) throws IOException, URISyntaxException {
 
-        String repoName = "jedoc";
-        String repoTitle = "Jedoc";
+        String repoName = "josman";
+        String repoTitle = "Josman";
 
-        JedocProject jedoc = new JedocProject(
+        JosmanProject josman = new JosmanProject(
                 repoName,
                 repoTitle,
                 "opendatatrentino",
@@ -28,6 +28,6 @@ public class Runner {
                 true
         );
 
-        jedoc.generateSite();
+        josman.generateSite();
     }   
 }

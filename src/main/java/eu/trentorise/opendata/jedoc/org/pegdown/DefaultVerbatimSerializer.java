@@ -1,7 +1,7 @@
-package eu.trentorise.opendata.jedoc.org.pegdown;
+package eu.trentorise.opendata.josman.org.pegdown;
 
 import org.parboiled.common.StringUtils;
-import eu.trentorise.opendata.jedoc.org.pegdown.ast.VerbatimNode;
+import eu.trentorise.opendata.josman.org.pegdown.ast.VerbatimNode;
 
 public class DefaultVerbatimSerializer implements VerbatimSerializer {
     public static final DefaultVerbatimSerializer INSTANCE = new DefaultVerbatimSerializer();

@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.trentorise.opendata.jedoc;
+package eu.trentorise.opendata.josman;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import eu.trentorise.opendata.commons.NotFoundException;
@@ -29,13 +29,13 @@ public class DirWalker extends DirectoryWalker {
 
     private File sourceRoot;
     private File destinationRoot;
-    private JedocProject jedoc;
+    private JosmanProject josman;
     SemVersion version;
 
     /**
      * @throws NotFoundException if source root doesn't exists
      */
-    public DirWalker(File sourceRoot, File destinationRoot, JedocProject jedoc, SemVersion version) {
+    public DirWalker(File sourceRoot, File destinationRoot, JosmanProject josman, SemVersion version) {
         super();
         checkNotNull(sourceRoot);
         if (!sourceRoot.exists()) {
@@ -45,11 +45,11 @@ public class DirWalker extends DirectoryWalker {
         if (destinationRoot.exists()) {
             throw new NotFoundException("destination directory does already exists: " + destinationRoot.getAbsolutePath());
         }
-        checkNotNull(jedoc);
+        checkNotNull(josman);
         checkNotNull(version);
         this.sourceRoot = sourceRoot;
         this.destinationRoot = destinationRoot;
-        this.jedoc = jedoc;
+        this.josman = josman;
         this.version = version;
     }
 
@@ -89,12 +89,12 @@ public class DirWalker extends DirectoryWalker {
         File target;
         
         if (file.getName().endsWith(".md")) {
-            target = new File(destinationRoot, Jedocs.htmlizePath(targetRelPath));
+            target = new File(destinationRoot, Josmans.htmlizePath(targetRelPath));
             LOG.log(Level.INFO, "Creating file {0}", target.getAbsolutePath());
             if (target.exists()) {
                 throw new DirWalkerException("Target file already exists!", file, target);
             }
-            jedoc.writeMdAsHtml(file, target, "../", version);
+            josman.writeMdAsHtml(file, target, "../", version);
         } else {
             target = new File(destinationRoot, targetRelPath);
             if (target.exists()) {
@@ -115,8 +115,8 @@ public class DirWalker extends DirectoryWalker {
         return destinationRoot;
     }
 
-    public JedocProject getJedoc() {
-        return jedoc;
+    public JosmanProject getJosman() {
+        return josman;
     }
 
     public SemVersion getVersion() {

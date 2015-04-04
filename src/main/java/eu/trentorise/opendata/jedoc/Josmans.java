@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.trentorise.opendata.jedoc;
+package eu.trentorise.opendata.josman;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import eu.trentorise.opendata.commons.NotFoundException;
@@ -37,13 +37,13 @@ import org.eclipse.egit.github.core.service.RepositoryService;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 
 /**
- * Utilities for Jedoc
+ * Utilities for Josman
  *
  * @author David Leoni
  */
-public class Jedocs {
+public class Josmans {
 
-    private static final Logger LOG = Logger.getLogger(Jedocs.class.getName());
+    private static final Logger LOG = Logger.getLogger(Josmans.class.getName());
 
     public static final int CONNECTION_TIMEOUT = 1000;
 
@@ -106,7 +106,7 @@ public class Jedocs {
     ;
     
     /**
-     * Constructs a SemVersion out of a release tag, like i.e. jedoc-1.2.3
+     * Constructs a SemVersion out of a release tag, like i.e. josman-1.2.3
      */
     public static SemVersion version(String repoName, String releaseTag) {
         String versionString = releaseTag.replace(repoName + "-", "");
@@ -115,7 +115,7 @@ public class Jedocs {
 
     /**
      *
-     * @param repoName i.e. "jedoc"
+     * @param repoName i.e. "josman"
      * @param major
      * @param minor
      * @param tags
@@ -185,7 +185,7 @@ public class Jedocs {
      * Returns new sorted map of only version tags of the format repoName-x.y.z
      * filtered tags, the latter having the highest version.
      *
-     * @param repoName the github repository name i.e. jedoc
+     * @param repoName the github repository name i.e. josman
      * @param tags a list of tags from the repository
      */
     public static SortedMap<String, RepositoryTag> filterTags(String repoName, List<RepositoryTag> tags) {
@@ -208,9 +208,9 @@ public class Jedocs {
      * Returns the release tag formed by inserting a minus between the repoName
      * and the version
      *
-     * @param repoName i.e. jedoc
+     * @param repoName i.e. josman
      * @param version i.e. 1.2.3
-     * @return i.e. jedoc-1.2.3
+     * @return i.e. josman-1.2.3
      */
     public static String releaseTag(String repoName, SemVersion version) {
         return repoName + "-" + version;
@@ -218,10 +218,10 @@ public class Jedocs {
 
     /**
      * Returns the github repo url, i.e.
-     * https://github.com/opendatatrentino/jedoc
+     * https://github.com/opendatatrentino/josman
      *
      * @param organization i.e. opendatatrentino
-     * @param name i.e. jedoc
+     * @param name i.e. josman
      */
     public static String repoUrl(String organization, String name) {
         return "https://github.com/" + organization + "/" + name;
@@ -229,9 +229,9 @@ public class Jedocs {
 
     /**
      * Returns the github release code url, i.e.
-     * https://github.com/opendatatrentino/jedoc/blob/todo-releaseTag
+     * https://github.com/opendatatrentino/josman/blob/todo-releaseTag
      *
-     * @param repoName i.e. jedoc
+     * @param repoName i.e. josman
      * @param version i.e. 1.2.3
      */
     public static String repoRelease(String organization, String repoName, SemVersion version) {
@@ -240,10 +240,10 @@ public class Jedocs {
 
     /**
      * Returns the github wiki url, i.e.
-     * https://github.com/opendatatrentino/jedoc/wiki
+     * https://github.com/opendatatrentino/josman/wiki
      *
      * @param organization i.e. opendatatrentino
-     * @param repoName i.e. jedoc
+     * @param repoName i.e. josman
      */
     public static String repoWiki(String organization, String repoName) {
         return repoUrl(organization, repoName) + "/wiki";
@@ -251,10 +251,10 @@ public class Jedocs {
 
     /**
      * Returns the github issues url, i.e.
-     * https://github.com/opendatatrentino/jedoc/issues
+     * https://github.com/opendatatrentino/josman/issues
      *
      * @param organization i.e. opendatatrentino
-     * @param repoName i.e. jedoc
+     * @param repoName i.e. josman
      */
     public static String repoIssues(String organization, String repoName) {
         return repoUrl(organization, repoName) + "/issues";
@@ -262,10 +262,10 @@ public class Jedocs {
 
     /**
      * Returns the github milestones url, i.e.
-     * https://github.com/opendatatrentino/jedoc/milestones
+     * https://github.com/opendatatrentino/josman/milestones
      *
      * @param organization i.e. opendatatrentino
-     * @param repoName i.e. jedoc
+     * @param repoName i.e. josman
      */
     public static String repoMilestones(String organization, String repoName) {
         return repoUrl(organization, repoName) + "/milestones";
@@ -275,7 +275,7 @@ public class Jedocs {
      * Returns the github wiki url, i.e.
      *
      * @param organization i.e. opendatatrentino
-     * @param repoName i.e. jedoc
+     * @param repoName i.e. josman
      */
     public static String repoWebsite(String organization, String repoName) {
         return "https://" + organization + ".github.io/" + repoName;
@@ -283,11 +283,11 @@ public class Jedocs {
 
     public static SemVersion latestVersion(String repoName, List<RepositoryTag> tags) {
         OdtUtils.checkNotEmpty(tags, "Invalid repository tags!");
-        SortedMap<String, RepositoryTag> filteredTags = Jedocs.filterTags(repoName, tags);
+        SortedMap<String, RepositoryTag> filteredTags = Josmans.filterTags(repoName, tags);
         if (filteredTags.isEmpty()) {
             throw new NotFoundException("Couldn't find any released version!");
         }
-        return Jedocs.version(repoName, filteredTags.lastKey());
+        return Josmans.version(repoName, filteredTags.lastKey());
     }
 
     /**
@@ -460,9 +460,9 @@ public class Jedocs {
         LOG.log(Level.INFO, "Can''t find file {0}", new File(localPath).getAbsolutePath());
 
         try {
-            URL url = JedocProject.class.getResource(path);
+            URL url = JosmanProject.class.getResource(path);
             LOG.log(Level.INFO, "Found file in {0}", url);
-            InputStream ret = JedocProject.class.getResourceAsStream(path);
+            InputStream ret = JosmanProject.class.getResourceAsStream(path);
             return ret;
         }
         catch (Exception ex) {

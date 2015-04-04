@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package eu.trentorise.opendata.jedoc.org.pegdown.plugins;
+package eu.trentorise.opendata.josman.org.pegdown.plugins;
 
 import org.parboiled.BaseParser;
 import org.parboiled.Parboiled;

@@ -1,4 +1,4 @@
-package eu.trentorise.opendata.jedoc.org.pegdown;
+package eu.trentorise.opendata.josman.org.pegdown;
 
 import org.parboiled.common.StringUtils;
 

@@ -2,12 +2,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>eu.trentorise.opendata</groupId>
-    <artifactId>jedoc</artifactId>
+    <artifactId>josman</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     
-    <name>Jedoc</name>
-    <url>https://github.com/opendatatrentino/jedoc</url>    
+    <name>Josman</name>
+    <url>https://github.com/opendatatrentino/josman</url>    
    
     
     <parent>
@@ -17,7 +17,7 @@
     </parent>  
     
     <properties>
-        <scmUrl>https://github.com/opendatatrentino/jedoc</scmUrl>        
+        <scmUrl>https://github.com/opendatatrentino/josman</scmUrl>        
         <github.global.server>github</github.global.server>
     </properties>
         

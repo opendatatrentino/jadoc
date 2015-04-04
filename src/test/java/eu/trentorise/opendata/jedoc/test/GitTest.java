@@ -1,7 +1,7 @@
-package eu.trentorise.opendata.jedoc.test;
+package eu.trentorise.opendata.josman.test;
 
 import eu.trentorise.opendata.commons.OdtConfig;
-import eu.trentorise.opendata.jedoc.Jedocs;
+import eu.trentorise.opendata.josman.Josmans;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -60,8 +60,8 @@ public class GitTest {
      */
     @Test
     public void testEgit() throws IOException {
-        List<RepositoryTag> tags = Jedocs.fetchTags("opendatatrentino", "jedoc");
-        SortedMap<String, RepositoryTag> filteredTags = Jedocs.filterTags("jedoc", tags);
+        List<RepositoryTag> tags = Josmans.fetchTags("opendatatrentino", "josman");
+        SortedMap<String, RepositoryTag> filteredTags = Josmans.filterTags("josman", tags);
         for (String tagName : filteredTags.keySet()) {
             RepositoryTag tag = filteredTags.get(tagName);
             LOG.info(tag.getName());

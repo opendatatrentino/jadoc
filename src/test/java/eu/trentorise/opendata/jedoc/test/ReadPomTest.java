@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.trentorise.opendata.jedoc.test;
+package eu.trentorise.opendata.josman.test;
 
 import eu.trentorise.opendata.commons.OdtConfig;
 import java.io.FileInputStream;

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package eu.trentorise.opendata.jedoc.org.pegdown;
+package eu.trentorise.opendata.josman.org.pegdown;
 
 /**
  * Encapsulates basic string output functionality.

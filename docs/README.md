@@ -1,6 +1,6 @@
-<p class="jedoc-to-strip">
+<p class="josman-to-strip">
 WARNING: WORK IN PROGRESS - THIS IS ONLY A TEMPLATE FOR THE DOCUMENTATION. <br/>
-RELEASE DOCS ARE ON THE <a href="http://opendatatrentino.github.io/jedoc/" target="_blank">PROJECT WEBSITE</a>
+RELEASE DOCS ARE ON THE <a href="http://opendatatrentino.github.io/josman/" target="_blank">PROJECT WEBSITE</a>
 </p>
 
 This #{version} release is just for testing docs and release system.
@@ -8,7 +8,7 @@ This #{version} release is just for testing docs and release system.
 
 This is a custom image for this version: <img src="img/test-img.png">
 
-This is an image for all versions: <img src="../img/jedoc-logo-200px.png" width="150px">
+This is an image for all versions: <img src="../img/josman-logo-200px.png" width="150px">
 
 
 Links without extension:
@@ -26,12 +26,12 @@ Great discovery: links without extension don't work...
 
 ### Usage
 
-Jedoc is available on Maven Central. To use it, put this in the dependencies section of your _pom.xml_:
+Josman is available on Maven Central. To use it, put this in the dependencies section of your _pom.xml_:
 
 ```
     <dependency>
         <groupId>eu.trentorise.opendata</groupId>
-        <artifactId>jedoc</artifactId>
+        <artifactId>josman</artifactId>
         <version>#{version}</version>            
     </dependency>
 ```

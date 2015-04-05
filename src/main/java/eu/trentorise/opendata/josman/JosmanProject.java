@@ -23,11 +23,23 @@ import org.eclipse.egit.github.core.RepositoryTag;
 import eu.trentorise.opendata.josman.org.pegdown.Parser;
 import eu.trentorise.opendata.josman.org.pegdown.PegDownProcessor;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.util.SortedMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.jgit.lib.FileMode;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectLoader;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.DepthWalk;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.treewalk.TreeWalk;
+import org.eclipse.jgit.treewalk.filter.PathFilter;
 
 /**
  *
@@ -36,6 +48,7 @@ import org.apache.commons.io.IOUtils;
 public class JosmanProject {
 
     private static final Logger LOG = Logger.getLogger(JosmanProject.class.getName());
+    private static final int DEPTH = 8000;
 
     public static final String DOCS_FOLDER = "docs";
 
@@ -47,6 +60,7 @@ public class JosmanProject {
     private File pagesDir;
 
     private Model pom;
+    private Repository repo;
 
     /**
      * Null means they were not fetched. Notice we may also have fetched tags
@@ -159,17 +173,7 @@ public class JosmanProject {
         checkNotEmpty(relPath, "Invalid relative path!");
         checkNotNull(version);
 
-        File targetFile;
-
-        if (Josmans.isRootpath(relPath)) {
-            targetFile = new File(
-                    pagesDir,
-                    Josmans.htmlizePath(relPath));
-        } else {
-            targetFile = new File(
-                    targetVersionDir(version),
-                    Josmans.htmlizePath(relPath));
-        }
+        File targetFile = Josmans.targetFile(pagesDir, relPath, version);
 
         if (targetFile.exists()) {
             throw new RuntimeException("Target file already exists! "
@@ -182,7 +186,7 @@ public class JosmanProject {
             if (targetFile.exists()) {
                 throw new RuntimeException("Target file already exists! Target is " + targetFile.getAbsolutePath());
             }
-            copyMdAsHtml(sourceStream, relPath, targetFile, version);
+            copyMdAsHtml(sourceStream, relPath, version);
         } else {
 
             LOG.log(Level.INFO, "Copying file into {0}", targetFile.getAbsolutePath());
@@ -210,16 +214,16 @@ public class JosmanProject {
     void copyMdAsHtml(
             InputStream sourceMdStream,
             String relPath,
-            File outputFile,
             final SemVersion version) {
 
-        checkNotNull(outputFile);
         checkNotNull(version);
         checkNotEmpty(relPath, "Invalid relative path!");
         final String prependedPath = Josmans.prependedPath(relPath);
 
-        if (outputFile.exists()) {
-            throw new RuntimeException("Trying to write md file to target that already exists!! Target is " + outputFile.getAbsolutePath());
+        File targetFile = Josmans.targetFile(pagesDir, relPath, version);
+
+        if (targetFile.exists()) {
+            throw new RuntimeException("Trying to write md file to target that already exists!! Target is " + targetFile.getAbsolutePath());
         }
 
         String sourceMdString;
@@ -229,7 +233,7 @@ public class JosmanProject {
             sourceMdString = writer.toString();
         }
         catch (Exception ex) {
-            throw new RuntimeException("Couldn't read source md stream! Target path is " + outputFile.getAbsolutePath(), ex);
+            throw new RuntimeException("Couldn't read source md stream! Target path is " + targetFile.getAbsolutePath(), ex);
         }
 
         Josmans.checkNotMeaningful(sourceMdString, "Invalid source md file!");
@@ -379,31 +383,36 @@ public class JosmanProject {
             }
 
         } else {
-            LOG.warning("TODO - ADDING ONLY ONE TAG AND IGNORING THE OTHER ONES");
-            addVersionHeaderTag(skeleton, prependedPath, version, prependedPath.length() != 0);
-            /*
-             for (RepositoryTag tag : tags) {
-             SemVersion ver = Josmans.version(repoName, tag.getName());
-             addVersionHeaderTag(skeleton, prependedPath, ver, true);
-             }
-             throw new UnsupportedOperationException("repo tags are not supported yet!");
-             */
+
+            for (RepositoryTag tag : tags) {
+                SemVersion ver = Josmans.version(repoName, tag.getName());
+                addVersionHeaderTag(
+                                    skeleton, 
+                                    prependedPath, 
+                                    ver, 
+                                    !Josmans.isRootpath(relPath) && ver.equals(version));
+            }
+
             Pattern p = Pattern.compile("todo", Pattern.CASE_INSENSITIVE);
             Matcher matcher = p.matcher(skeleton.html());
             if (matcher.find()) {
-                throw new RuntimeException("Found '" + matcher.group() + "' string in stream for " + outputFile.getAbsolutePath() + " (at position " + matcher.start() + ")");
+                //throw new RuntimeException("Found '" + matcher.group() + "' string in stream for " + targetFile.getAbsolutePath() + " (at position " + matcher.start() + ")");
+                LOG.warning("Found '" + matcher.group() + "' string in stream for " + targetFile.getAbsolutePath());
             }
         }
 
-        if (!outputFile.getParentFile().mkdirs()) {
-            throw new RuntimeException("Couldn't create target directories to host processed md file " + outputFile.getAbsolutePath());
+        if (!targetFile.getParentFile().exists()) {
+            if (!targetFile.getParentFile().mkdirs()) {
+                throw new RuntimeException("Couldn't create target directories to host processed md file " + targetFile.getAbsolutePath());
+            }
         }
+
         try {
 
-            FileUtils.write(outputFile, skeleton.html());
+            FileUtils.write(targetFile, skeleton.html());
         }
         catch (Exception ex) {
-            throw new RuntimeException("Couldn't write into " + outputFile.getAbsolutePath() + "!", ex);
+            throw new RuntimeException("Couldn't write into " + targetFile.getAbsolutePath() + "!", ex);
         }
 
     }
@@ -421,10 +430,7 @@ public class JosmanProject {
     private void buildIndex(SemVersion latestVersion) {
         try {
             File sourceMdFile = new File(sourceRepoDir, "README.md");
-            
-            File outputFile = new File(pagesDir, "index.html");
-            
-            copyMdAsHtml(new FileInputStream(sourceMdFile), "README.md", outputFile, latestVersion);
+            copyMdAsHtml(new FileInputStream(sourceMdFile), "README.md", latestVersion);
         }
         catch (FileNotFoundException ex) {
             throw new RuntimeException("Error while building index!", ex);
@@ -449,7 +455,71 @@ public class JosmanProject {
      */
     private void processDocsDir(SemVersion version) {
         checkNotNull(version);
+               
+        if (!sourceDocsDir().exists()) {
+            throw new RuntimeException("Can't find source dir!" + sourceDocsDir().getAbsolutePath());
+        }
 
+        File targetVersionDir = targetVersionDir(version);
+
+        deleteOutputVersionDir(targetVersionDir, version.getMajor(), version.getMinor());
+
+        DirWalker dirWalker = new DirWalker(
+                sourceDocsDir(),
+                targetVersionDir,
+                this,
+                version
+        );
+        dirWalker.process();
+        copyJavadoc(version);
+    }
+
+    /**
+     * Processes a directory 'docs' at tag repoName-version that holds
+     * documentation for a given version of the software
+     */
+    private void processGitDocsDir(SemVersion version) {
+        checkNotNull(version);
+
+        checkNotNull(repo);
+
+        String releaseTag = Josmans.releaseTag(repoName, version);
+
+        try {
+            ObjectId lastCommitId = repo.resolve(releaseTag);
+
+            // a RevWalk allows to walk over commits based on some filtering that is defined
+            DepthWalk.RevWalk revWalk = new DepthWalk.RevWalk(repo, DEPTH);
+            RevCommit commit = revWalk.parseCommit(lastCommitId);
+            RevTree tree = commit.getTree();
+            TreeWalk treeWalk = new TreeWalk(repo);
+            treeWalk.addTree(tree);
+            treeWalk.setRecursive(true);
+
+            treeWalk.setFilter(PathFilter.create("docs"));// careful this looks for *exact* dir name (i.e. 'docs' will work for docs/a.txt but 'doc' won't work) 
+
+            while (treeWalk.next()) {
+
+                String pathString = treeWalk.getPathString();
+
+                FileMode fileMode = treeWalk.getFileMode(0);
+                LOG.log(Level.FINE, "{0}:  mode: {1}, type: {2}", new Object[]{pathString, Josmans.gitFileModeToString(fileMode), fileMode.getObjectType()});
+
+                ObjectId objectId = treeWalk.getObjectId(0);
+                ObjectLoader loader = repo.open(objectId);
+
+                InputStream stream = loader.openStream();
+
+                copyStream(stream, pathString, version);
+            }
+            copyJavadoc(version);
+        }
+
+        catch (Exception ex) {
+            throw new RuntimeException("Error while extracting docs from git local repo at commit " + releaseTag, ex);
+        }
+
+        // ------------------------------------------------------
         // File sourceMdFile = new File(wikiDir, "userdoc\\" + ver.getMajor() + ver.getMinor() + "\\Usage.md");
         // File outputFile = new File(pagesDir, version + "\\usage.html");
         // buildMd(sourceMdFile, outputFile, "../");            
@@ -509,10 +579,34 @@ public class JosmanProject {
             throw new RuntimeException("Error while reading pom!", ex);
         }
 
+        try {
+            File repoFile = new File(sourceRepoDir, ".git");
+
+            FileRepositoryBuilder builder = new FileRepositoryBuilder();
+            repo = builder.setGitDir(repoFile)
+                    .readEnvironment() // scan environment GIT_* variables
+                    .build();
+        }
+        catch (Exception ex) {
+            throw new RuntimeException("Error while reading local git repo!", ex);
+        }
+
+        LOG.log(Level.INFO, "Cleaning target: {0}", pagesDir.getAbsolutePath());
+        if (!pagesDir.getAbsolutePath().endsWith("site")) {
+            throw new RuntimeException("target directory does not end with 'site' !");
+        }
+        try {
+            FileUtils.deleteDirectory(pagesDir);
+        }
+        catch (IOException ex) {
+            throw new RuntimeException("Error while deleting directory " + pagesDir.getAbsolutePath(), ex);
+        }
+
         SemVersion snapshotVersion = SemVersion.of(pom.getVersion()).withPreReleaseVersion("");
 
         if (local) {
             LOG.log(Level.INFO, "Processing local version");
+
             buildIndex(snapshotVersion);
             processDocsDir(snapshotVersion);
             createLatestDocsDirectory(snapshotVersion);
@@ -525,28 +619,27 @@ public class JosmanProject {
             LOG.log(Level.INFO, "Processing published version");
             buildIndex(latestPublishedVersion);
             String curBranch = Josmans.readRepoCurrentBranch(sourceRepoDir);
-            SemVersion curBranchVersion = Josmans.versionFromBranchName(curBranch);
-            RepositoryTag releaseTag;
-            try {
-                releaseTag = Josmans.find(repoName, curBranchVersion.getMajor(), curBranchVersion.getMinor(), repoTags);
-            }
-            catch (NotFoundException ex) {
-                throw new RuntimeException("Current branch " + curBranch + " does not correspond to any released version!", ex);
-            }
-            SemVersion tagVersion = Josmans.version(repoName, releaseTag.getName());
-            processDocsDir(tagVersion);
-            createLatestDocsDirectory(tagVersion);
-            LOG.warning("TODO - PROCESSING ONLY CURRENT BRANCH, NEED TO PROCESS ALL BRANCHES INSTEAD!");
-            /*
-             SortedMap<String, RepositoryTag> filteredTags = Josmans.filterTags(repoName, repoTags);
-
-             for (RepositoryTag tag : filteredTags.values()) {
-
-             LOG.log(Level.INFO, "Processing release tag {0}", tag.getName());
-             processDir(Josmans.version(repoName, tag.getName()));
-
+            /* old processor for current branch
+             SemVersion curBranchVersion = Josmans.versionFromBranchName(curBranch);
+             RepositoryTag releaseTag;
+             try {
+             releaseTag = Josmans.find(repoName, curBranchVersion.getMajor(), curBranchVersion.getMinor(), repoTags);
              }
+             catch (NotFoundException ex) {
+             throw new RuntimeException("Current branch " + curBranch + " does not correspond to any released version!", ex);
+             }
+             SemVersion tagVersion = Josmans.version(repoName, releaseTag.getName());
+             processDocsDir(tagVersion);
+             createLatestDocsDirectory(tagVersion);
+             LOG.warning("TODO - PROCESSING ONLY CURRENT BRANCH, NEED TO PROCESS ALL BRANCHES INSTEAD!");
              */
+
+            SortedMap<String, RepositoryTag> filteredTags = Josmans.filterTags(repoName, repoTags);
+
+            for (RepositoryTag tag : filteredTags.values()) {
+                LOG.log(Level.INFO, "Processing release tag {0}", tag.getName());
+                processGitDocsDir(Josmans.version(repoName, tag.getName()));
+            }
 
         }
 

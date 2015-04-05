@@ -5,6 +5,7 @@
  */
 package eu.trentorise.opendata.josman;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
@@ -16,16 +17,18 @@ public class Runner {
     
      public static void main(String[] args) throws IOException, URISyntaxException {
 
-        String repoName = "josman";
-        String repoTitle = "Josman";
+        String repoName = "traceprov";
+        String repoTitle = "TraceProv";
+        
+        String sep = File.separator;
 
         JosmanProject josman = new JosmanProject(
                 repoName,
                 repoTitle,
                 "opendatatrentino",
-                "..\\..\\" + repoName + "\\prj", // todo fixed path!
-                "..\\..\\" + repoName + "\\prj\\target\\site", // todo fixed path!
-                true
+                ".."+ sep + ".." + sep + repoName + sep + "prj", // todo fixed path!
+                ".."+ sep + ".." + sep + repoName + sep + "prj" + sep +"target" + sep + "site", // todo fixed path!
+                false
         );
 
         josman.generateSite();

@@ -34,6 +34,7 @@ import org.eclipse.egit.github.core.Repository;
 import org.eclipse.egit.github.core.RepositoryTag;
 import org.eclipse.egit.github.core.client.GitHubClient;
 import org.eclipse.egit.github.core.service.RepositoryService;
+import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 
 /**
@@ -47,8 +48,9 @@ public final class Josmans {
 
     public static final int CONNECTION_TIMEOUT = 1000;
 
-    private Josmans(){}
-    
+    private Josmans() {
+    }
+
     /**
      * Reading file with Jgit:
      * https://github.com/centic9/jgit-cookbook/blob/master/src/main/java/org/dstadler/jgit/api/ReadFileFromCommit.java
@@ -365,7 +367,8 @@ public final class Josmans {
      * works when developing in the IDE. If not found then searches in jar file.
      */
     public static void copyDirFromResource(Class clazz, String dirPath, File destDir) {
-        File sourceDir = new File(dirPath);
+        String sep = File.separator;
+        File sourceDir = new File("src" + sep + "main" + sep + "resources", dirPath);
 
         if (sourceDir.exists()) {
             LOG.log(Level.INFO, "Copying directory from {0} to {1}", new Object[]{sourceDir.getAbsolutePath(), destDir.getAbsolutePath()});
@@ -479,17 +482,20 @@ public final class Josmans {
      * @param relPath path relative to the {@link #sourceRepoDir} (i.e.
      * LICENSE.txt or docs/README.md)
      */
-    public File targetFile(File pagesDir, String relPath, final SemVersion version) {
-        if (relPath.startsWith("docs/")
-                || relPath.startsWith("docs\\")) {
+    static File targetFile(File pagesDir, String relPath, final SemVersion version) {
+
+        if (Josmans.isRootpath(relPath)) {
+            return new File(
+                    pagesDir,
+                    Josmans.htmlizePath(relPath));
+        } else {
             return new File(
                     pagesDir,
                     Josmans.majorMinor(version)
                     + File.separator
-                    + relPath.substring("docs/".length()));
-        } else {
-            return new File(pagesDir, relPath);
+                    + Josmans.htmlizePath(relPath.substring("docs/".length())));
         }
+
     }
 
     /**
@@ -497,17 +503,47 @@ public final class Josmans {
      *
      * @param relPath may start with "docs"
      */
-    public static String prependedPath(String relPath) {
+    static String prependedPath(String relPath) {
         checkNotNull(relPath);
-        if (relPath.startsWith("docs")) {
-            return "../";
-        } else {
+        // todo it handles only one level....
+        if (isRootpath(relPath)) {
             return "";
+        } else {
+            return "../";
+
         }
     }
 
-    public static boolean isRootpath(String relPath) {
+    /**
+     * Returns true if provided {@code relPath} is a website root path
+     *
+     * @param relPath the website path, i.e. README.md or docs/CHANGES.md or
+     * docs\CHANGES.md
+     */
+    static boolean isRootpath(String relPath) {
         checkNotNull(relPath);
-        return !relPath.startsWith("docs");
+        return !(relPath.equals("docs")
+                || relPath.startsWith("docs/")
+                || relPath.startsWith("docs\\"));
+    }
+
+    /**
+     * Returns a string representation of the provided git file mode
+     */
+    static String gitFileModeToString(FileMode fileMode) {
+        if (fileMode.equals(FileMode.EXECUTABLE_FILE)) {
+            return "Executable File";
+        } else if (fileMode.equals(FileMode.REGULAR_FILE)) {
+            return "Normal File";
+        } else if (fileMode.equals(FileMode.TREE)) {
+            return "Directory";
+        } else if (fileMode.equals(FileMode.SYMLINK)) {
+            return "Symlink";
+        } else if (fileMode.equals(FileMode.GITLINK)) {
+            return "submodule link";
+        } else {
+            return fileMode.toString();
+        }
+
     }
 }

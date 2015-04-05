@@ -1,7 +1,7 @@
 package eu.trentorise.opendata.josman.test;
 
 import eu.trentorise.opendata.commons.OdtConfig;
-import eu.trentorise.opendata.josman.JosUtils;
+import eu.trentorise.opendata.josman.Josmans;
 import java.util.logging.Logger;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -22,29 +22,29 @@ public class JosmansTest {
     @Test
     public void testNotMeaningfulString(){
         
-        JosUtils.checkNotMeaningful(" a", "");
-        JosUtils.checkNotMeaningful(" a\n", "");
-        JosUtils.checkNotMeaningful(" a\t", "");
+        Josmans.checkNotMeaningful(" a", "");
+        Josmans.checkNotMeaningful(" a\n", "");
+        Josmans.checkNotMeaningful(" a\t", "");
         
         try {
-            JosUtils.checkNotMeaningful("", "");
+            Josmans.checkNotMeaningful("", "");
         } catch (IllegalArgumentException ex){
                 
         }
         
         try {
-            JosUtils.checkNotMeaningful(" ", "");
+            Josmans.checkNotMeaningful(" ", "");
         } catch (IllegalArgumentException ex){
                 
         }
         try {
-            JosUtils.checkNotMeaningful("\\t", "");
+            Josmans.checkNotMeaningful("\\t", "");
         } catch (IllegalArgumentException ex){
                 
         }
         
         try {
-            JosUtils.checkNotMeaningful("\\n", "");
+            Josmans.checkNotMeaningful("\\n", "");
         } catch (IllegalArgumentException ex){
                 
         }

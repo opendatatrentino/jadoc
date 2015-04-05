@@ -41,12 +41,14 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
  *
  * @author David Leoni
  */
-public class JosUtils {
+public final class Josmans {
 
-    private static final Logger LOG = Logger.getLogger(JosUtils.class.getName());
+    private static final Logger LOG = Logger.getLogger(Josmans.class.getName());
 
     public static final int CONNECTION_TIMEOUT = 1000;
 
+    private Josmans(){}
+    
     /**
      * Reading file with Jgit:
      * https://github.com/centic9/jgit-cookbook/blob/master/src/main/java/org/dstadler/jgit/api/ReadFileFromCommit.java
@@ -283,17 +285,17 @@ public class JosUtils {
 
     public static SemVersion latestVersion(String repoName, List<RepositoryTag> tags) {
         OdtUtils.checkNotEmpty(tags, "Invalid repository tags!");
-        SortedMap<String, RepositoryTag> filteredTags = JosUtils.filterTags(repoName, tags);
+        SortedMap<String, RepositoryTag> filteredTags = Josmans.filterTags(repoName, tags);
         if (filteredTags.isEmpty()) {
             throw new NotFoundException("Couldn't find any released version!");
         }
-        return JosUtils.version(repoName, filteredTags.lastKey());
+        return Josmans.version(repoName, filteredTags.lastKey());
     }
 
     /**
-     * Returns a new path
+     * Returns a new url friendly path.
      *
-     * @path a path that may contain .md files
+     * @param path a path that may contain .md files
      */
     public static String htmlizePath(String path) {
         if (path.endsWith("README.md")) {
@@ -469,5 +471,43 @@ public class JosUtils {
             throw new NotFoundException("Can't load file in resources! " + path);
         }
 
+    }
+
+    /**
+     * Returns the target file where a source path should be transfered into.
+     *
+     * @param relPath path relative to the {@link #sourceRepoDir} (i.e.
+     * LICENSE.txt or docs/README.md)
+     */
+    public File targetFile(File pagesDir, String relPath, final SemVersion version) {
+        if (relPath.startsWith("docs/")
+                || relPath.startsWith("docs\\")) {
+            return new File(
+                    pagesDir,
+                    Josmans.majorMinor(version)
+                    + File.separator
+                    + relPath.substring("docs/".length()));
+        } else {
+            return new File(pagesDir, relPath);
+        }
+    }
+
+    /**
+     * Returns either "../" or "" according to {@code relPath}
+     *
+     * @param relPath may start with "docs"
+     */
+    public static String prependedPath(String relPath) {
+        checkNotNull(relPath);
+        if (relPath.startsWith("docs")) {
+            return "../";
+        } else {
+            return "";
+        }
+    }
+
+    public static boolean isRootpath(String relPath) {
+        checkNotNull(relPath);
+        return !relPath.startsWith("docs");
     }
 }

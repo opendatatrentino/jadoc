@@ -1,14 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package eu.trentorise.opendata.josman;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import eu.trentorise.opendata.commons.NotFoundException;
 import eu.trentorise.opendata.commons.SemVersion;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,23 +15,28 @@ import org.apache.commons.io.DirectoryWalker;
 import org.apache.commons.io.FileUtils;
 
 /**
- *
+ * Copies directory to destination and converts md files to html.
  * @author David Leoni
  */
 @Immutable
 public class DirWalker extends DirectoryWalker {
-
     private static final Logger LOG = Logger.getLogger(DirWalker.class.getName());
 
+    
+    
     private File sourceRoot;
     private File destinationRoot;
-    private JosmanProject josman;
+    private JosmanProject project;
     SemVersion version;
 
     /**
-     * @throws NotFoundException if source root doesn't exists
+     * @throws NotFoundException if source root doesn't exists    
      */
-    public DirWalker(File sourceRoot, File destinationRoot, JosmanProject josman, SemVersion version) {
+    public DirWalker(
+                    File sourceRoot, 
+                    File destinationRoot, 
+                    JosmanProject josman, 
+                    SemVersion version) {
         super();
         checkNotNull(sourceRoot);
         if (!sourceRoot.exists()) {
@@ -49,7 +50,7 @@ public class DirWalker extends DirectoryWalker {
         checkNotNull(version);
         this.sourceRoot = sourceRoot;
         this.destinationRoot = destinationRoot;
-        this.josman = josman;
+        this.project = josman;
         this.version = version;
     }
 
@@ -59,14 +60,16 @@ public class DirWalker extends DirectoryWalker {
         } catch (IOException ex) {
             throw new RuntimeException("Error while copying root " + sourceRoot.getAbsolutePath(), ex);
         }
-    }
-
-    ;
+    }   
     
-    
+    /**
+     * Copies directory content to destination 
+     * @param depth
+     * @param results ignored
+     */
     @Override
     protected boolean handleDirectory(File directory, int depth, Collection results) {
-        LOG.info("Processing directory " + directory.getAbsolutePath());
+        LOG.log(Level.INFO, "Processing directory {0}", directory.getAbsolutePath());
         File target = new File(destinationRoot, directory.getAbsolutePath().replace(sourceRoot.getAbsolutePath(), ""));
         if (target.exists()) {
             throw new RuntimeException("Target directory already exists!! " + target.getAbsolutePath());
@@ -83,28 +86,13 @@ public class DirWalker extends DirectoryWalker {
      * copied
      */
     @Override
-    protected void handleFile(File file, int depth, Collection results) throws IOException {
-
+    protected void handleFile(File file, int depth, Collection results) throws IOException {       
         String targetRelPath = file.getAbsolutePath().replace(sourceRoot.getAbsolutePath(), "");
-        File target;
         
-        if (file.getName().endsWith(".md")) {
-            target = new File(destinationRoot, JosUtils.htmlizePath(targetRelPath));
-            LOG.log(Level.INFO, "Creating file {0}", target.getAbsolutePath());
-            if (target.exists()) {
-                throw new DirWalkerException("Target file already exists!", file, target);
-            }
-            josman.writeMdAsHtml(file, target, "../", version);
-        } else {
-            target = new File(destinationRoot, targetRelPath);
-            if (target.exists()) {
-                throw new DirWalkerException("Target file already exists!", file, target);
-            }
-
-            LOG.log(Level.INFO, "Copying file into {0}", target.getAbsolutePath());
-            FileUtils.copyFile(file, target);
-        }
-
+        project.copyStream(
+                            new FileInputStream(file), 
+                            "docs" + File.separator  + targetRelPath, 
+                            version);
     }
 
     public File getSourceRoot() {
@@ -115,8 +103,8 @@ public class DirWalker extends DirectoryWalker {
         return destinationRoot;
     }
 
-    public JosmanProject getJosman() {
-        return josman;
+    public JosmanProject getProject() {
+        return project;
     }
 
     public SemVersion getVersion() {

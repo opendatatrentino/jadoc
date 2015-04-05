@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableList;
 import eu.trentorise.opendata.commons.OdtConfig;
 import static eu.trentorise.opendata.commons.OdtUtils.checkNotEmpty;
-import eu.trentorise.opendata.josman.JosUtils;
+import eu.trentorise.opendata.josman.Josmans;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -80,8 +80,8 @@ public class GitTest {
      */
     @Test
     public void testEgit() throws IOException {
-        List<RepositoryTag> tags = JosUtils.fetchTags("opendatatrentino", "josman");
-        SortedMap<String, RepositoryTag> filteredTags = JosUtils.filterTags("josman", tags);
+        List<RepositoryTag> tags = Josmans.fetchTags("opendatatrentino", "josman");
+        SortedMap<String, RepositoryTag> filteredTags = Josmans.filterTags("josman", tags);
         for (String tagName : filteredTags.keySet()) {
             RepositoryTag tag = filteredTags.get(tagName);
             LOG.info(tag.getName());
@@ -114,10 +114,7 @@ public class GitTest {
         Repository repo = builder.setGitDir(repoFile)
                 .readEnvironment() // scan environment GIT_* variables
                 .findGitDir() // scan up the file system tree
-                .build();
-
-        // find the Tree for current HEAD
-        RevTree tree = getTree(repo);
+                .build();        
 
         //printFile(repo, tree, "*a.*");
         printDirectory(repo, "master", "src");
@@ -184,7 +181,8 @@ public class GitTest {
             treeWalk.addTree(tree);
             treeWalk.setRecursive(true);
 
-            //treeWalk.setFilter(PathFilter.create(prefix)); damn this seems to only do exact match... 
+            treeWalk.setFilter(PathFilter.create(prefix));// careful this looks for *exact* dir name (i.e. 'docs' will work for docs/a.txt but 'doc' won't work) 
+            
             while (treeWalk.next()) {
                 // FileMode now indicates that this is a directory, i.e. FileMode.TREE.equals(fileMode) holds true
                 String pathString = treeWalk.getPathString();
@@ -195,7 +193,7 @@ public class GitTest {
 
                     ObjectId objectId = treeWalk.getObjectId(0);
                     ObjectLoader loader = repo.open(objectId);
-
+                    
                     InputStream stream = loader.openStream();
 
                     File outputFile = File.createTempFile("bla", "bla");

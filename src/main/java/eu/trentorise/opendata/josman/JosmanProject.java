@@ -354,7 +354,7 @@ public class JosmanProject {
         skeleton.$("#josman-project").attr("href", Josmans.repoUrl(repoOrganization, repoName));
 
         skeleton.$("#josman-home").attr("href", prependedPath + "index.html");
-        if (prependedPath.length() == 0) {
+        if (Josmans.isRootpath(relPath)) {
             skeleton.$("#josman-home").addClass("josman-tag-selected");
         }
 
@@ -370,7 +370,7 @@ public class JosmanProject {
         } else {
             skeleton.$("#josman-internal-sidebar").text("");
         }
-        if (prependedPath.length() == 0) {
+        if (Josmans.isRootpath(relPath)) {
             skeleton.$("#josman-sidebar-managed-block").css("display", "none");
         }
 
@@ -697,7 +697,7 @@ public class JosmanProject {
         String ret = "";
         for (Jerry sourceHeaderLink : html.$("h3 a")) {
             // <a href="#header1">Header 1</a><br/>
-
+            
             ret += "<div> <a href='" + sourceHeaderLink.first().first().attr("href") + "'>" + sourceHeaderLink.first().text() + "</a></div> \n";
             /*Jerry.jerry("<a>")
              .attr("href","#" + sourceHeaderLink.attr("id"))

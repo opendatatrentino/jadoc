@@ -30,6 +30,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.eclipse.egit.github.core.Repository;
 import org.eclipse.egit.github.core.RepositoryTag;
 import org.eclipse.egit.github.core.client.GitHubClient;
@@ -295,17 +296,24 @@ public final class Josmans {
     }
 
     /**
-     * Returns a new url friendly path.
+     * Returns a new url friendly and normalized path.
      *
      * @param path a path that may contain .md files
      */
     public static String htmlizePath(String path) {
-        if (path.endsWith("README.md")) {
-            return path.replace("README.md", "index.html");
-        } else if (path.endsWith(".md")) {
-            return path.substring(0, path.length() - 3) + ".html";
+        checkNotEmpty(path, "Invalid path!");
+        String slashPath = path.replace("\\", "/");
+        if (slashPath.endsWith("README.md")) {
+            return slashPath.replace("README.md", "index.html");
+        } else if (slashPath.endsWith(".md")) {
+            return slashPath.substring(0, slashPath.length() - 3) + ".html";
         }
-        return path;
+        String ret = OdtUtils.removeTrailingSlash(slashPath);
+        if (ret.length() == 0){
+            return "/";
+        } else {
+            return ret;
+        }
     }
 
     /**
@@ -485,6 +493,70 @@ public final class Josmans {
         }
 
     }
+
+    /**
+     * Returns the name displayed on the website as menu item for a given page.
+     *
+     * @param relPath path relative to the {@link #sourceRepoDir} (i.e.
+     * LICENSE.txt or docs/README.md)
+     */
+    public static String targetName(String relPath) {
+        String htmlizedPath = htmlizePath(relPath);
+        if (htmlizedPath.endsWith("/index.html")) {
+            return "Usage";
+        }
+        if (htmlizedPath.endsWith("/CHANGES.html")) {
+            return "Release notes";
+        }
+        String withoutFiletype = htmlizedPath.replace(".html", "");
+        int lastSlash = withoutFiletype.lastIndexOf("/");
+        String fileName = withoutFiletype;
+        if (lastSlash != -1) {
+            fileName = withoutFiletype.substring(lastSlash + 1);
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(Character.toUpperCase(fileName.charAt(0)));
+
+        int i = 1;
+        while (i < fileName.length()) {
+            char ch = fileName.charAt(i);
+            if (i + 1 < fileName.length()) {
+                char nextCh = fileName.charAt(i + 1);
+                if (Character.isLowerCase(ch)
+                        && Character.isUpperCase(nextCh)) {
+                    sb.append(ch + " ");
+                    i += 1;
+                    continue;
+                } else {
+                    if (i + 2 < fileName.length()) {
+                        char nextNextCh = fileName.charAt(i + 2);
+                        if (Character.isUpperCase(ch)
+                                && Character.isUpperCase(nextCh)
+                                && Character.isLowerCase(nextNextCh)) {
+                            sb.append(ch);
+                            sb.append(" ");
+                            sb.append(Character.toLowerCase(nextCh));                          
+                            i += 2;
+                            continue;
+                        } else {
+                            if (Character.isUpperCase(ch)
+                                    && Character.isUpperCase(nextCh)){
+                                sb.append(ch);
+                                i += 1;
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+
+            sb.append(Character.toLowerCase(ch));
+            i += 1;
+        }
+        return sb.toString();
+    }
+
+
 
     /**
      * Returns the target file where a source path should be transfered into.

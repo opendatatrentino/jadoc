@@ -55,7 +55,33 @@ body {
 }                     
 
 .josman-sidebar-block {
-    padding: 10px;
+    padding: 10px;    
+    word-wrap: break-word;
+}
+.josman-sidebar-block ul {
+    list-style-type: none;
+     margin-left: -38px;
+}
+
+.josman-sidebar-page-title {    
+    margin-bottom:5px;
+     color: black !important;
+    font-weight: bold; 
+}
+
+.josman-sidebar-page-title a {    
+       color: black !important; // need to replicate from div otherwise doesn't work :-/'
+}
+
+/* 2nd level */
+.tree > li > label {
+  padding:10px 0px;
+}
+
+/* 3rd level */
+.tree > li > ul > li > a {
+  font-size:10pt;
+  margin-left:0px;
 }
 
 .josman-sidebar-block div {
@@ -70,6 +96,9 @@ body {
     
 }
 
+#josman-sidebar-managed-block {
+    margin-top:-28px;
+}
 
 #josman-nav-header {
     display: inline; 
@@ -152,6 +181,7 @@ code {
 .josman-external-link:after {
     content: " " url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAVklEQVR4Xn3PgQkAMQhDUXfqTu7kTtkpd5RA8AInfArtQ2iRXFWT2QedAfttj2FsPIOE1eCOlEuoWWjgzYaB/IkeGOrxXhqB+uA9Bfcm0lAZuh+YIeAD+cAqSz4kCMUAAAAASUVORK5CYII=);
 }            
+
 
 
 

@@ -1,8 +1,11 @@
 package eu.trentorise.opendata.josman.test;
 
 import eu.trentorise.opendata.commons.OdtConfig;
+import eu.trentorise.opendata.commons.SemVersion;
 import eu.trentorise.opendata.josman.Josmans;
 import java.util.logging.Logger;
+import org.junit.Assert;
+import static org.junit.Assert.assertEquals;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -50,5 +53,38 @@ public class JosmansTest {
         }
                         
 
+    }
+    
+    @Test
+    public void testHtmlizePath(){
+        assertEquals("docs/BLA.html", Josmans.htmlizePath("docs\\BLA.md"));
+        assertEquals("some/Path", Josmans.htmlizePath("some/Path/"));
+        assertEquals("/",Josmans.htmlizePath("\\"));
+        
+        try {
+            Josmans.htmlizePath("");
+            Assert.fail();                    
+        } catch (IllegalArgumentException ex){
+            
+        }
+    }
+    
+    @Test
+    public void testTargetName(){
+        try {
+            Josmans.targetName("");
+            Assert.fail();
+        } catch(IllegalArgumentException ex){
+            
+        }
+        
+        
+        assertEquals("Usage", Josmans.targetName("docs/README.md"));
+        assertEquals("Release notes", Josmans.targetName("/CHANGES.md"));
+        assertEquals("Hello world", Josmans.targetName("HelloWorld.html"));
+        
+        assertEquals("Ab CD ef", Josmans.targetName("AbCDEf.html"));
+        
+        assertEquals("Ab C de", Josmans.targetName("AbCDe.html"));
     }
 }

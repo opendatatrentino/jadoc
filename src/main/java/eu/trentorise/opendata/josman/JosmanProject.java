@@ -55,7 +55,7 @@ public class JosmanProject {
     private String repoName;
     private String repoTitle;
     private String repoOrganization;
-    private boolean local;
+    private boolean snapshotMode;
     private File sourceRepoDir;
     private File pagesDir;
 
@@ -94,13 +94,20 @@ public class JosmanProject {
 
     }
 
+    /**
+     *
+     * @param snapshotMode if true the website generator will only process the
+     * current branch snapshot. Otherwise all released versions will be
+     * processed.
+     *
+     */
     public JosmanProject(
             String repoName,
             String repoTitle,
             String repoOrganization,
             String sourceRepoDirPath,
             String pagesDirPath,
-            boolean local) {
+            boolean snapshotMode) {
         checkNotEmpty(repoName, "Invalid repository name!");
         checkNotEmpty(repoTitle, "Invalid repository title!");
         checkNotEmpty(repoOrganization, "Invalid repository organization!");
@@ -115,7 +122,7 @@ public class JosmanProject {
         } else {
             this.sourceRepoDir = new File(sourceRepoDirPath);
         }
-        this.local = local;
+        this.snapshotMode = snapshotMode;
         this.pagesDir = new File(pagesDirPath);
         checkArgument(!sourceRepoDir.getAbsolutePath().equals(pagesDir.getAbsolutePath()),
                 "Source folder and target folder coincide! They are " + sourceRepoDir.getAbsolutePath());
@@ -140,7 +147,7 @@ public class JosmanProject {
     }
 
     private File sourceJavadocDir(SemVersion version) {
-        if (local) {
+        if (snapshotMode) {
             return new File(sourceRepoDir, "target" + File.separator + "apidocs");
         } else {
             throw new UnsupportedOperationException("todo non-local javadoc not supported yet");
@@ -369,7 +376,7 @@ public class JosmanProject {
 
         skeleton.$(".josman-to-strip").remove();
 
-        if (local) {
+        if (snapshotMode) {
 
             if (tags.size() > 0) {
                 SemVersion ver = Josmans.version(repoName, tags.get(0).getName());
@@ -387,10 +394,10 @@ public class JosmanProject {
             for (RepositoryTag tag : tags) {
                 SemVersion ver = Josmans.version(repoName, tag.getName());
                 addVersionHeaderTag(
-                                    skeleton, 
-                                    prependedPath, 
-                                    ver, 
-                                    !Josmans.isRootpath(relPath) && ver.equals(version));
+                        skeleton,
+                        prependedPath,
+                        ver,
+                        !Josmans.isRootpath(relPath) && ver.equals(version));
             }
 
             Pattern p = Pattern.compile("todo", Pattern.CASE_INSENSITIVE);
@@ -455,7 +462,7 @@ public class JosmanProject {
      */
     private void processDocsDir(SemVersion version) {
         checkNotNull(version);
-               
+
         if (!sourceDocsDir().exists()) {
             throw new RuntimeException("Can't find source dir!" + sourceDocsDir().getAbsolutePath());
         }
@@ -566,6 +573,15 @@ public class JosmanProject {
 
     }
 
+    /**
+     * Returns true if the website generator will only process the current
+     * branch snapshot. Otherwise all released versions will be processed.
+     *
+     */
+    public boolean isSnapshotMode() {
+        return snapshotMode;
+    }
+
     public void generateSite() {
 
         LOG.log(Level.INFO, "Fetching {0}/{1} tags.", new Object[]{repoOrganization, repoName});
@@ -604,7 +620,7 @@ public class JosmanProject {
 
         SemVersion snapshotVersion = SemVersion.of(pom.getVersion()).withPreReleaseVersion("");
 
-        if (local) {
+        if (snapshotMode) {
             LOG.log(Level.INFO, "Processing local version");
 
             buildIndex(snapshotVersion);
@@ -699,7 +715,7 @@ public class JosmanProject {
         if (targetJavadoc.exists() && (targetJavadoc.isFile() || targetJavadoc.length() > 0)) {
             throw new RuntimeException("Target directory for Javadoc already exists!!! " + targetJavadoc.getAbsolutePath());
         }
-        if (local) {
+        if (snapshotMode) {
             File sourceJavadoc = sourceJavadocDir(version);
             if (sourceJavadoc.exists()) {
 
@@ -707,12 +723,26 @@ public class JosmanProject {
                     LOG.log(Level.INFO, "Now copying Javadoc from {0} to {1}", new Object[]{sourceJavadoc.getAbsolutePath(), targetJavadoc.getAbsolutePath()});
                     FileUtils.copyDirectory(sourceJavadoc, targetJavadoc);
                 }
-                catch (Throwable tr) {
-                    throw new RuntimeException("Error while copying Javadoc from " + sourceJavadoc.getAbsolutePath() + " to " + targetJavadoc.getAbsolutePath());
+                catch (Exception ex) {
+                    throw new RuntimeException("Error while copying Javadoc from " + sourceJavadoc.getAbsolutePath() + " to " + targetJavadoc.getAbsolutePath(), ex);
                 }
+            } else {
+                LOG.info("Couldn't find javadoc, skipping it.");
             }
         } else {
-            File jardocs = Josmans.fetchJavadoc(pom.getGroupId(), pom.getArtifactId(), version);
+            File jardocs;
+            try {
+                jardocs = Josmans.fetchJavadoc(pom.getGroupId(), pom.getArtifactId(), version);
+            }
+            catch (Exception ex) {
+                String sep = File.separator;
+                String localJarPath = sourceRepoDir.getAbsolutePath() + sep + "target" + sep + "checkout" + sep + "target" + sep + Josmans.javadocJarName(repoTitle, version);
+                LOG.log(Level.WARNING, "Error while fetching javadoc from Maven Central, trying to locate it at " + localJarPath, ex);
+                jardocs = new File(localJarPath);
+                if (!jardocs.exists()) {
+                    throw new RuntimeException("Couldn't find any jar for javadoc!");
+                }
+            }
             Josmans.copyDirFromJar(jardocs, targetJavadocDir(version), "");
         }
 

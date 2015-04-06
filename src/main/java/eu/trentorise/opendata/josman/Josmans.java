@@ -325,6 +325,16 @@ public final class Josmans {
     }
 
     /**
+     * Returns the maven style javadoc file name (i.e.
+     * my-prog-1.2.3-javadoc.jar)
+     */
+    public static String javadocJarName(String artifactId, SemVersion version) {
+        checkNotEmpty(artifactId, "Invalid artifactId!");
+        checkNotNull(version);
+        return artifactId + "-" + version + "-javadoc.jar";
+    }
+
+    /**
      * Fetches Javadoc of released artifact and writes it into {@code destFile}
      *
      * @param destFile must exists.
@@ -346,7 +356,7 @@ public final class Josmans {
 
         URL url;
         try {
-            url = new URL("http://repo1.maven.org/maven2/" + groupId.replace(".", "/") + "/" + artifactId + "/" + version + "/" + artifactId + "-" + version + "-javadoc.jar");
+            url = new URL("http://repo1.maven.org/maven2/" + groupId.replace(".", "/") + "/" + artifactId + "/" + version + "/" + javadocJarName(artifactId, version));
         }
         catch (MalformedURLException ex) {
             throw new RuntimeException("Error while forming javadoc URL!", ex);

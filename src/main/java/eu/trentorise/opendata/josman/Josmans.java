@@ -239,18 +239,18 @@ public final class Josmans {
     }
 
     /**
-     * Returns new sorted map of only non deprecated version tags of the format
+     * Returns new sorted map of only version tags to be processed of the format
      * repoName-x.y.z filtered tags, the latter having the highest version.
      *
      * @param repoName the github repository name i.e. josman
      * @param tags a list of tags from the repository
-     * @param deprecatedVersions These versions will be filtered in the output.
+     * @param versionsToSkip These versions will be filtered in the output.
      * @return map of version as string and correspondig RepositoryTag
      */
-    public static SortedMap<String, RepositoryTag> nonDeprecatedVersionTags(String repoName, List<RepositoryTag> tags, List<SemVersion> deprecatedVersions) {
+    public static SortedMap<String, RepositoryTag> versionTagsToProcess(String repoName, List<RepositoryTag> tags, List<SemVersion> versionsToSkip) {
         SortedMap<String, RepositoryTag> map = versionTags(repoName, tags);
-        for (SemVersion deprecatedVersion : deprecatedVersions) {
-            String tag = releaseTag(repoName, deprecatedVersion);
+        for (SemVersion versionToSkip : versionsToSkip) {
+            String tag = releaseTag(repoName, versionToSkip);
             if (map.containsKey(tag)) {
                 map.remove(tag);
             }

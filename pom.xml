@@ -13,7 +13,7 @@
     <parent>
         <groupId>eu.trentorise.opendata.commons</groupId>
         <artifactId>odt-super-pom</artifactId>
-        <version>1.0.11</version>
+        <version>1.0.14</version>
     </parent>  
     
     <properties>        

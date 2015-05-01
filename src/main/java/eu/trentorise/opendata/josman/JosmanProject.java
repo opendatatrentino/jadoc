@@ -30,8 +30,6 @@ import java.util.SortedMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.jgit.errors.CorruptObjectException;
-import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
@@ -61,7 +59,7 @@ public class JosmanProject {
     private boolean snapshotMode;
     private File sourceRepoDir;
     private File pagesDir;
-    private List<SemVersion> deprecatedVersions;
+    private List<SemVersion> versionsToSkip;
 
     private Model pom;
     private Repository repo;
@@ -101,8 +99,8 @@ public class JosmanProject {
     /**
      *
      * @param snapshotMode if true the website generator will only process the
-     * current branch snapshot. Otherwise all released versions will be
-     * processed.
+     * current branch snapshot. Otherwise all released versions except
+     * {@code versionsToSkip} will be processed,
      *
      */
     public JosmanProject(
@@ -111,7 +109,7 @@ public class JosmanProject {
             String repoOrganization,
             String sourceRepoDirPath,
             String pagesDirPath,
-            List<SemVersion> deprecatedVersions,
+            List<SemVersion> versionsToSkip,
             boolean snapshotMode) {
 
         checkNotEmpty(repoName, "Invalid repository name!");
@@ -119,12 +117,12 @@ public class JosmanProject {
         checkNotEmpty(repoOrganization, "Invalid repository organization!");
         checkNotNull(sourceRepoDirPath, "Invalid repository source docs dir path!");
         checkNotNull(pagesDirPath, "Invalid pages dir path!");
-        checkNotNull(deprecatedVersions, "Invalid deprecated versions!");
+        checkNotNull(versionsToSkip, "Invalid versions to skip!");
 
         this.repoName = repoName;
         this.repoTitle = repoTitle;
         this.repoOrganization = repoOrganization;
-        this.deprecatedVersions = ImmutableList.copyOf(deprecatedVersions);
+        this.versionsToSkip = ImmutableList.copyOf(versionsToSkip);
         if (sourceRepoDirPath.isEmpty()) {
             this.sourceRepoDir = new File("." + File.separator);
         } else {
@@ -377,12 +375,12 @@ public class JosmanProject {
         // cleaning example versions
         skeleton.$(".josman-version-tab-header").remove();
 
-        List<RepositoryTag> tags = new ArrayList(Josmans.versionTags(repoName, repoTags).values());
+        List<RepositoryTag> tags = new ArrayList(Josmans.versionTagsToProcess(repoName, repoTags, versionsToSkip).values());
         Collections.reverse(tags);
 
         if (Josmans.isRootpath(relPath)) {
-            skeleton.$("#josman-internal-sidebar").text("");        
-            skeleton.$("#josman-sidebar-managed-block").css("display", "none");            
+            skeleton.$("#josman-internal-sidebar").text("");
+            skeleton.$("#josman-sidebar-managed-block").css("display", "none");
         } else {
             Jerry sidebar = makeSidebar(contentFromMdHtml, relPath, relpaths);
             skeleton.$("#josman-internal-sidebar").html(sidebar.htmlAll(true));
@@ -582,7 +580,7 @@ public class JosmanProject {
                 InputStream stream = loader.openStream();
 
                 if (relpaths.isEmpty()) {
-                    copyStream(stream, DOCS_FOLDER + "/" +  pathString, version, ImmutableList.of(DOCS_FOLDER + "/" + path));
+                    copyStream(stream, DOCS_FOLDER + "/" + pathString, version, ImmutableList.of(DOCS_FOLDER + "/" + path));
                 } else {
                     copyStream(stream, pathString, version, relpaths);
                 }
@@ -722,7 +720,7 @@ public class JosmanProject {
              LOG.warning("TODO - PROCESSING ONLY CURRENT BRANCH, NEED TO PROCESS ALL BRANCHES INSTEAD!");
              */
 
-            SortedMap<String, RepositoryTag> filteredTags = Josmans.versionTags(repoName, repoTags);
+            SortedMap<String, RepositoryTag> filteredTags = Josmans.versionTagsToProcess(repoName, repoTags, versionsToSkip);
 
             for (RepositoryTag tag : filteredTags.values()) {
                 LOG.log(Level.INFO, "Processing release tag {0}", tag.getName());
@@ -800,7 +798,6 @@ public class JosmanProject {
             if (relpath.equals(currentRelPath)) {
                 pageTitle.text(Josmans.targetName(relpath));
                 pageTitle.addClass("josman-sidebar-selected");
-                
 
                 for (Jerry sourceHeaderLink : html.$("h3 a")) {
                     // <a href="#header1">Header 1</a><br/>

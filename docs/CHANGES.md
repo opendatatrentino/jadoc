@@ -1,3 +1,7 @@
-##### 1.0.0
+JOSMAN Release Notes  -  http://opendatatrentino.github.io/josman
 
-Make basic website creator
+#### 0.5.0
+
+May 1st
+
+Implemented basic web site generator, but is a super alpha version

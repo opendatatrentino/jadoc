@@ -5,12 +5,10 @@ import com.google.common.collect.ImmutableList;
 import eu.trentorise.opendata.commons.OdtConfig;
 import static eu.trentorise.opendata.commons.OdtUtils.checkNotEmpty;
 import eu.trentorise.opendata.josman.Josmans;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.io.StringReader;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.logging.Level;
@@ -81,7 +79,7 @@ public class GitTest {
     @Test
     public void testEgit() throws IOException {
         List<RepositoryTag> tags = Josmans.fetchTags("opendatatrentino", "josman");
-        SortedMap<String, RepositoryTag> filteredTags = Josmans.filterTags("josman", tags);
+        SortedMap<String, RepositoryTag> filteredTags = Josmans.versionTags("josman", tags);
         for (String tagName : filteredTags.keySet()) {
             RepositoryTag tag = filteredTags.get(tagName);
             LOG.info(tag.getName());

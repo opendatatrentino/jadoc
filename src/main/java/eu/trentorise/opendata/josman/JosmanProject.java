@@ -30,6 +30,8 @@ import java.util.SortedMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.jgit.errors.CorruptObjectException;
+import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
@@ -40,6 +42,7 @@ import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
+import org.parboiled.common.ImmutableList;
 
 /**
  *
@@ -58,6 +61,7 @@ public class JosmanProject {
     private boolean snapshotMode;
     private File sourceRepoDir;
     private File pagesDir;
+    private List<SemVersion> deprecatedVersions;
 
     private Model pom;
     private Repository repo;
@@ -107,16 +111,20 @@ public class JosmanProject {
             String repoOrganization,
             String sourceRepoDirPath,
             String pagesDirPath,
+            List<SemVersion> deprecatedVersions,
             boolean snapshotMode) {
+
         checkNotEmpty(repoName, "Invalid repository name!");
         checkNotEmpty(repoTitle, "Invalid repository title!");
         checkNotEmpty(repoOrganization, "Invalid repository organization!");
         checkNotNull(sourceRepoDirPath, "Invalid repository source docs dir path!");
         checkNotNull(pagesDirPath, "Invalid pages dir path!");
+        checkNotNull(deprecatedVersions, "Invalid deprecated versions!");
 
         this.repoName = repoName;
         this.repoTitle = repoTitle;
         this.repoOrganization = repoOrganization;
+        this.deprecatedVersions = ImmutableList.copyOf(deprecatedVersions);
         if (sourceRepoDirPath.isEmpty()) {
             this.sourceRepoDir = new File("." + File.separator);
         } else {
@@ -167,17 +175,21 @@ public class JosmanProject {
      * {@code relPath}, {@code preprendedPath} and {@code version}
      *
      * @param sourceStream
-     * @param relPath path relative to root, i.e. img/mypic.jpg or
-     * docs/README.md
+     * @param relPath path relative to root, i.e. docs/README.md or
+     * img/mypic.jpg
+     *
      * @param version
+     * @return the target file
      */
-    void copyStream(
+    File copyStream(
             InputStream sourceStream,
             String relPath,
-            final SemVersion version) {
+            final SemVersion version,
+            List<String> relPaths) {
 
         checkNotNull(sourceStream, "Invalid source stream!");
         checkNotEmpty(relPath, "Invalid relative path!");
+        checkNotEmpty(relPaths, "Invalid relative paths!");
         checkNotNull(version);
 
         File targetFile = Josmans.targetFile(pagesDir, relPath, version);
@@ -193,7 +205,7 @@ public class JosmanProject {
             if (targetFile.exists()) {
                 throw new RuntimeException("Target file already exists! Target is " + targetFile.getAbsolutePath());
             }
-            copyMdAsHtml(sourceStream, relPath, version);
+            copyMdAsHtml(sourceStream, relPath, version, relPaths);
         } else {
 
             LOG.log(Level.INFO, "Copying file into {0}", targetFile.getAbsolutePath());
@@ -206,7 +218,7 @@ public class JosmanProject {
                 throw new RuntimeException("Error while copying stream to file!", ex);
             }
         }
-
+        return targetFile;
     }
 
     /**
@@ -217,14 +229,18 @@ public class JosmanProject {
      * @param relPath path relative to {@link #sourceRepoDir}, i.e.
      * img/mypic.jpg or docs/README.md
      * @param version The version the md page refers to.
+     * @param relpaths a list of relative paths for the sidebar
      */
     void copyMdAsHtml(
             InputStream sourceMdStream,
             String relPath,
-            final SemVersion version) {
+            final SemVersion version,
+            List<String> relpaths) {
 
         checkNotNull(version);
         checkNotEmpty(relPath, "Invalid relative path!");
+        checkNotEmpty(relpaths, "Invalid relative paths!");
+
         final String prependedPath = Josmans.prependedPath(relPath);
 
         File targetFile = Josmans.targetFile(pagesDir, relPath, version);
@@ -361,17 +377,15 @@ public class JosmanProject {
         // cleaning example versions
         skeleton.$(".josman-version-tab-header").remove();
 
-        List<RepositoryTag> tags = new ArrayList(Josmans.filterTags(repoName, repoTags).values());
+        List<RepositoryTag> tags = new ArrayList(Josmans.versionTags(repoName, repoTags).values());
         Collections.reverse(tags);
 
-        String sidebarString = makeSidebar(contentFromMdHtml);
-        if (sidebarString.length() > 0) {
-            skeleton.$("#josman-internal-sidebar").html(sidebarString);
-        } else {
-            skeleton.$("#josman-internal-sidebar").text("");
-        }
         if (Josmans.isRootpath(relPath)) {
-            skeleton.$("#josman-sidebar-managed-block").css("display", "none");
+            skeleton.$("#josman-internal-sidebar").text("");        
+            skeleton.$("#josman-sidebar-managed-block").css("display", "none");            
+        } else {
+            Jerry sidebar = makeSidebar(contentFromMdHtml, relPath, relpaths);
+            skeleton.$("#josman-internal-sidebar").html(sidebar.htmlAll(true));
         }
 
         skeleton.$(".josman-to-strip").remove();
@@ -437,7 +451,7 @@ public class JosmanProject {
     private void buildIndex(SemVersion latestVersion) {
         try {
             File sourceMdFile = new File(sourceRepoDir, "README.md");
-            copyMdAsHtml(new FileInputStream(sourceMdFile), "README.md", latestVersion);
+            copyMdAsHtml(new FileInputStream(sourceMdFile), "README.md", latestVersion, ImmutableList.of("README.md"));
         }
         catch (FileNotFoundException ex) {
             throw new RuntimeException("Error while building index!", ex);
@@ -471,14 +485,45 @@ public class JosmanProject {
 
         deleteOutputVersionDir(targetVersionDir, version.getMajor(), version.getMinor());
 
+        List<String> relPaths = new ArrayList<String>();
+        File[] files = sourceDocsDir().listFiles();
+        //If this pathname does not denote a directory, then listFiles() returns null. 
+
+        for (File file : files) {
+            if (file.isFile() && file.getName().endsWith(".md")) {
+                relPaths.add(DOCS_FOLDER + "/" + file.getName());
+            }
+        }
+
         DirWalker dirWalker = new DirWalker(
                 sourceDocsDir(),
                 targetVersionDir,
                 this,
-                version
+                version,
+                relPaths
         );
         dirWalker.process();
         copyJavadoc(version);
+    }
+
+    /**
+     * @param path the exact path. Careful: must be *exact* dir name (i.e.
+     * 'docs' will work for docs/a.txt but 'doc' won't work)
+     * @throws RuntimeException on error
+     */
+    private TreeWalk makeGitDocsWalk(RevTree tree, String path) {
+        checkNotNull(tree);
+        try {
+            TreeWalk treeWalk = new TreeWalk(repo);
+            treeWalk.addTree(tree);
+            treeWalk.setRecursive(true);
+
+            treeWalk.setFilter(PathFilter.create(path));
+            return treeWalk;
+        }
+        catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     /**
@@ -499,12 +544,31 @@ public class JosmanProject {
             DepthWalk.RevWalk revWalk = new DepthWalk.RevWalk(repo, DEPTH);
             RevCommit commit = revWalk.parseCommit(lastCommitId);
             RevTree tree = commit.getTree();
-            TreeWalk treeWalk = new TreeWalk(repo);
-            treeWalk.addTree(tree);
-            treeWalk.setRecursive(true);
 
-            treeWalk.setFilter(PathFilter.create("docs"));// careful this looks for *exact* dir name (i.e. 'docs' will work for docs/a.txt but 'doc' won't work) 
+            TreeWalk relPathsWalk = makeGitDocsWalk(tree, DOCS_FOLDER);
 
+            List<String> relpaths = new ArrayList();
+            while (relPathsWalk.next()) {
+                String pathString = relPathsWalk.getPathString();
+
+                if (pathString.endsWith(".md")) {
+                    FileMode fileMode = relPathsWalk.getFileMode(0);
+                    LOG.log(Level.FINE, "Collecting {0}:  mode: {1}, type: {2}", new Object[]{pathString, Josmans.gitFileModeToString(fileMode), fileMode.getObjectType()});
+                    relpaths.add(pathString);
+                }
+            }
+
+            String path;
+            List<String> fixedRelpaths;
+
+            if (relpaths.isEmpty()) {
+                LOG.log(Level.WARNING, "COULDN''T FIND ANY FILE IN " + DOCS_FOLDER + " for version {0}! TRYING TO USE README.md instead", version);
+                path = "README.md";
+            } else {
+                path = DOCS_FOLDER;
+            }
+
+            TreeWalk treeWalk = makeGitDocsWalk(tree, path);
             while (treeWalk.next()) {
 
                 String pathString = treeWalk.getPathString();
@@ -517,8 +581,14 @@ public class JosmanProject {
 
                 InputStream stream = loader.openStream();
 
-                copyStream(stream, pathString, version);
+                if (relpaths.isEmpty()) {
+                    copyStream(stream, DOCS_FOLDER + "/" +  pathString, version, ImmutableList.of(DOCS_FOLDER + "/" + path));
+                } else {
+                    copyStream(stream, pathString, version, relpaths);
+                }
+
             }
+
             copyJavadoc(version);
         }
 
@@ -530,24 +600,26 @@ public class JosmanProject {
         // File sourceMdFile = new File(wikiDir, "userdoc\\" + ver.getMajor() + ver.getMinor() + "\\Usage.md");
         // File outputFile = new File(pagesDir, version + "\\usage.html");
         // buildMd(sourceMdFile, outputFile, "../");            
-        if (!sourceDocsDir().exists()) {
-            throw new RuntimeException("Can't find source dir!" + sourceDocsDir().getAbsolutePath());
-        }
+        /*
+         if (!sourceDocsDir().exists()) {
+         throw new RuntimeException("Can't find source dir!" + sourceDocsDir().getAbsolutePath());
+         }
 
-        File targetVersionDir = targetVersionDir(version);
+        
+         File targetVersionDir = targetVersionDir(version);
 
-        deleteOutputVersionDir(targetVersionDir, version.getMajor(), version.getMinor());
+         deleteOutputVersionDir(targetVersionDir, version.getMajor(), version.getMinor());
 
-        DirWalker dirWalker = new DirWalker(
-                sourceDocsDir(),
-                targetVersionDir,
-                this,
-                version
-        );
-        dirWalker.process();
+         DirWalker dirWalker = new DirWalker(
+         sourceDocsDir(),
+         targetVersionDir,
+         this,
+         version
+         );
+         dirWalker.process();
 
-        copyJavadoc(version);
-
+         copyJavadoc(version);
+         */
     }
 
     /**
@@ -650,7 +722,7 @@ public class JosmanProject {
              LOG.warning("TODO - PROCESSING ONLY CURRENT BRANCH, NEED TO PROCESS ALL BRANCHES INSTEAD!");
              */
 
-            SortedMap<String, RepositoryTag> filteredTags = Josmans.filterTags(repoName, repoTags);
+            SortedMap<String, RepositoryTag> filteredTags = Josmans.versionTags(repoName, repoTags);
 
             for (RepositoryTag tag : filteredTags.values()) {
                 LOG.log(Level.INFO, "Processing release tag {0}", tag.getName());
@@ -692,19 +764,79 @@ public class JosmanProject {
         LOG.log(Level.INFO, "\n\nSite is now browsable at {0}\n\n", pagesDir.getAbsolutePath());
     }
 
-    private String makeSidebar(String contentFromWikiHtml) {
-        Jerry html = Jerry.jerry(contentFromWikiHtml);
-        String ret = "";
-        for (Jerry sourceHeaderLink : html.$("h3 a")) {
-            // <a href="#header1">Header 1</a><br/>
-            
-            ret += "<div> <a href='" + sourceHeaderLink.first().first().attr("href") + "'>" + sourceHeaderLink.first().text() + "</a></div> \n";
-            /*Jerry.jerry("<a>")
-             .attr("href","#" + sourceHeaderLink.attr("id"))
-             .text(sourceHeaderLink.text()); */
+    /**
+     * Returns a Jerry object repereenting the non-managed sidebar for a given
+     * version page
+     *
+     * @param contentFromMdHtml the content of page we're making the sidebar for
+     * @param relpaths a list of relpaths of pages related to the version we're
+     * making the sidebar for
+     * @param currentRelPath the relpath of the page we're making the sidebar
+     * for
+     */
+    private Jerry makeSidebar(String contentFromMdHtml, String currentRelPath, List<String> relpaths) {
+        checkNotNull(contentFromMdHtml);
+        checkNotEmpty(currentRelPath, "Invalid current rel path!");
+        checkNotEmpty(relpaths, "Invalid list of relpaths!");
+
+        Jerry html = Jerry.jerry(contentFromMdHtml);
+
+        Jerry allLinksContainer = Jerry.jerry("<ul>").$("ul")
+                .addClass("josman-tree");
+
+        List<String> orderedRelpaths = Josmans.orderRelpaths(relpaths);
+
+        for (String relpath : orderedRelpaths) {
+            Jerry pageItemContainer = Jerry.jerry("<li>").$("li");
+
+            Jerry pageTitle
+                    = Jerry.jerry("<div>")
+                    .$("div")
+                    .addClass("josman-sidebar-page-title");
+
+            Jerry pageLinksContainer = Jerry.jerry("<ul>").$("ul")
+                    .addClass("josman-tree");
+
+            if (relpath.equals(currentRelPath)) {
+                pageTitle.text(Josmans.targetName(relpath));
+                pageTitle.addClass("josman-sidebar-selected");
+                
+
+                for (Jerry sourceHeaderLink : html.$("h3 a")) {
+                    // <a href="#header1">Header 1</a><br/>
+
+                    /*<ul class="josman-tree">
+                     <li>
+                     <div class="josman-sidebar-page-title">Usage</div>
+                     <ul class="josman-tree">
+                     <li><a href="#header1">Maven</a>   */
+                    Jerry linkContainer = Jerry.jerry("<div>").$("div");
+
+                    Jerry link = Jerry.jerry("<a>").$("a")
+                            .attr("href", sourceHeaderLink.first().first().attr("href"))
+                            .text(sourceHeaderLink.first().text());
+                    linkContainer.append(link.htmlAll(true));
+
+                    pageLinksContainer.append(linkContainer.htmlAll(true));
+
+                    // ret += "<div> <a href='" + sourceHeaderLink.first().first().attr("href") + "'>" + sourceHeaderLink.first().text() + "</a></div> \n";
+                    /*Jerry.jerry("<a>")
+                     .attr("href","#" + sourceHeaderLink.attr("id"))
+                     .text(sourceHeaderLink.text()); */
+                }
+            } else {
+                pageTitle.append(Jerry.jerry("<a>").$("a")
+                        .attr("href", Josmans.htmlizePath(relpath.substring(DOCS_FOLDER.length() + 1)))
+                        .text(Josmans.targetName(relpath)).htmlAll(true));
+            }
+
+            pageItemContainer.append(pageTitle.htmlAll(true));
+            pageItemContainer.append(pageLinksContainer.htmlAll(true));
+
+            allLinksContainer.append(pageItemContainer.htmlAll(true));
         }
 
-        return ret;
+        return allLinksContainer;
     }
 
     /**
@@ -747,4 +879,13 @@ public class JosmanProject {
         }
 
     }
+
+    public String getRepoName() {
+        return repoName;
+    }
+
+    public String getRepoOrganization() {
+        return repoOrganization;
+    }
+
 }

@@ -1,13 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package eu.trentorise.opendata.josman;
 
+import eu.trentorise.opendata.commons.SemVersion;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import org.parboiled.common.ImmutableList;
 
 /**
  *
@@ -28,7 +25,8 @@ public class Runner {
                 "opendatatrentino",
                 ".."+ sep + ".." + sep + repoName + sep + "prj", // todo fixed path!
                 ".."+ sep + ".." + sep + repoName + sep + "prj" + sep +"target" + sep + "site", // todo fixed path!
-                false
+                ImmutableList.<SemVersion>of(SemVersion.of("0.1.0")),
+                true
         );
 
         josman.generateSite();

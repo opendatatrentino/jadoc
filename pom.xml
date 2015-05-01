@@ -16,8 +16,7 @@
         <version>1.0.11</version>
     </parent>  
     
-    <properties>
-        <scmUrl>https://github.com/opendatatrentino/josman</scmUrl>        
+    <properties>        
         <github.global.server>github</github.global.server>
     </properties>
         

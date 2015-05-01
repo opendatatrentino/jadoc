@@ -2,17 +2,18 @@ package eu.trentorise.opendata.josman;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import eu.trentorise.opendata.commons.NotFoundException;
+import static eu.trentorise.opendata.commons.OdtUtils.checkNotEmpty;
 import eu.trentorise.opendata.commons.SemVersion;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.concurrent.Immutable;
 import org.apache.commons.io.DirectoryWalker;
-import org.apache.commons.io.FileUtils;
 
 /**
  * Copies directory to destination and converts md files to html.
@@ -27,7 +28,8 @@ public class DirWalker extends DirectoryWalker {
     private File sourceRoot;
     private File destinationRoot;
     private JosmanProject project;
-    SemVersion version;
+    private SemVersion version;
+    private List<String> relPaths;
 
     /**
      * @throws NotFoundException if source root doesn't exists    
@@ -36,7 +38,9 @@ public class DirWalker extends DirectoryWalker {
                     File sourceRoot, 
                     File destinationRoot, 
                     JosmanProject josman, 
-                    SemVersion version) {
+                    SemVersion version,
+                    List<String> relPaths
+    ) {
         super();
         checkNotNull(sourceRoot);
         if (!sourceRoot.exists()) {
@@ -48,10 +52,12 @@ public class DirWalker extends DirectoryWalker {
         }
         checkNotNull(josman);
         checkNotNull(version);
+        checkNotEmpty(relPaths, "Invalid relative paths");
         this.sourceRoot = sourceRoot;
         this.destinationRoot = destinationRoot;
         this.project = josman;
         this.version = version;
+        this.relPaths = relPaths;
     }
 
     public void process() {
@@ -63,7 +69,7 @@ public class DirWalker extends DirectoryWalker {
     }   
     
     /**
-     * Copies directory content to destination 
+     * Copies directory content to destination and adds processed directory File to results.
      * @param depth
      * @param results ignored
      */
@@ -78,21 +84,26 @@ public class DirWalker extends DirectoryWalker {
         if (!target.mkdirs()) {
             throw new RuntimeException("Couldn't create directory!! " + target.getAbsolutePath());
         }
+        results.add(target);
         return true;
     }
 
     /**
      * Converts .md to .html and README.md to index.html . Other files are just
-     * copied
+     * copied. Processed File is added to results.
      */
     @Override
     protected void handleFile(File file, int depth, Collection results) throws IOException {       
-        String targetRelPath = file.getAbsolutePath().replace(sourceRoot.getAbsolutePath(), "");
+        String targetRelPath = file
+                            .getAbsolutePath()
+                            .replace(sourceRoot.getAbsolutePath(), "")
+                            .substring(1); // so we get rid of "\" at the beginning
         
-        project.copyStream(
+        results.add(project.copyStream(
                             new FileInputStream(file), 
-                            "docs" + File.separator  + targetRelPath, 
-                            version);
+                            JosmanProject.DOCS_FOLDER + "/" + targetRelPath, 
+                            version,
+                            relPaths));
     }
 
     public File getSourceRoot() {

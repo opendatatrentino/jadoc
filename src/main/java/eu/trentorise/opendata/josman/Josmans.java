@@ -10,6 +10,7 @@ import eu.trentorise.opendata.commons.NotFoundException;
 import eu.trentorise.opendata.commons.OdtUtils;
 import static eu.trentorise.opendata.commons.OdtUtils.checkNotEmpty;
 import eu.trentorise.opendata.commons.SemVersion;
+import static eu.trentorise.opendata.josman.JosmanProject.DOCS_FOLDER;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -37,6 +38,7 @@ import org.eclipse.egit.github.core.client.GitHubClient;
 import org.eclipse.egit.github.core.service.RepositoryService;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.parboiled.common.ImmutableList;
 
 /**
  * Utilities for Josman
@@ -165,8 +167,7 @@ public final class Josmans {
 
     /**
      * Adds the candidate tag to the provided tags if no other tag has same
-     * major and minor or if its major.minor-patch are greater than provided
-     * tags.
+     * major and minor or if its patch is greater.
      */
     @Nullable
     private static void updateTags(String repoName, RepositoryTag candidateTag, List<RepositoryTag> tags) {
@@ -177,9 +178,10 @@ public final class Josmans {
             RepositoryTag tag = tags.get(i);
             SemVersion semVersion = version(repoName, tag.getName());
             if (candidateSemVarsion.getMajor() == semVersion.getMajor()
-                    && candidateSemVarsion.getMinor() == semVersion.getMinor()
-                    && candidateSemVarsion.getPatch() > semVersion.getPatch()) {
-                tags.set(i, candidateTag);
+                    && candidateSemVarsion.getMinor() == semVersion.getMinor()) {
+                if (candidateSemVarsion.getPatch() > semVersion.getPatch()) {
+                    tags.set(i, candidateTag);
+                }
                 return;
             }
         }
@@ -187,13 +189,40 @@ public final class Josmans {
     }
 
     /**
+     * Returns a new list with given relpaths ordered by importance, the first
+     * being the most important.
+     */
+    static List<String> orderRelpaths(List<String> relpaths) {
+        List<String> ret = new ArrayList(relpaths);
+        
+        String readme = DOCS_FOLDER + "/" + "README.md";
+        String changes = DOCS_FOLDER + "/" + "CHANGES.md";
+        
+        List<String> toSkip = ImmutableList.of(readme, changes);
+        
+        ret.removeAll(toSkip);
+        
+        if (relpaths.contains(readme)){
+            ret.add(0, readme);
+        }
+        
+        if (relpaths.contains(changes)){
+            ret.add(ret.size(), changes);
+        }
+        return ImmutableList.copyOf(ret);
+    }
+
+    
+    
+    /**
      * Returns new sorted map of only version tags of the format repoName-x.y.z
      * filtered tags, the latter having the highest version.
      *
      * @param repoName the github repository name i.e. josman
      * @param tags a list of tags from the repository
+     * @return map of version as string and correspondig RepositoryTag
      */
-    public static SortedMap<String, RepositoryTag> filterTags(String repoName, List<RepositoryTag> tags) {
+    public static SortedMap<String, RepositoryTag> versionTags(String repoName, List<RepositoryTag> tags) {
 
         List<RepositoryTag> ret = new ArrayList();
         for (RepositoryTag candidateTag : tags) {
@@ -205,6 +234,26 @@ public final class Josmans {
         TreeMap map = new TreeMap();
         for (RepositoryTag tag : ret) {
             map.put(tag.getName(), tag);
+        }
+        return map;
+    }
+
+    /**
+     * Returns new sorted map of only non deprecated version tags of the format
+     * repoName-x.y.z filtered tags, the latter having the highest version.
+     *
+     * @param repoName the github repository name i.e. josman
+     * @param tags a list of tags from the repository
+     * @param deprecatedVersions These versions will be filtered in the output.
+     * @return map of version as string and correspondig RepositoryTag
+     */
+    public static SortedMap<String, RepositoryTag> nonDeprecatedVersionTags(String repoName, List<RepositoryTag> tags, List<SemVersion> deprecatedVersions) {
+        SortedMap<String, RepositoryTag> map = versionTags(repoName, tags);
+        for (SemVersion deprecatedVersion : deprecatedVersions) {
+            String tag = releaseTag(repoName, deprecatedVersion);
+            if (map.containsKey(tag)) {
+                map.remove(tag);
+            }
         }
         return map;
     }
@@ -288,7 +337,7 @@ public final class Josmans {
 
     public static SemVersion latestVersion(String repoName, List<RepositoryTag> tags) {
         OdtUtils.checkNotEmpty(tags, "Invalid repository tags!");
-        SortedMap<String, RepositoryTag> filteredTags = Josmans.filterTags(repoName, tags);
+        SortedMap<String, RepositoryTag> filteredTags = Josmans.versionTags(repoName, tags);
         if (filteredTags.isEmpty()) {
             throw new NotFoundException("Couldn't find any released version!");
         }
@@ -309,7 +358,7 @@ public final class Josmans {
             return slashPath.substring(0, slashPath.length() - 3) + ".html";
         }
         String ret = OdtUtils.removeTrailingSlash(slashPath);
-        if (ret.length() == 0){
+        if (ret.length() == 0) {
             return "/";
         } else {
             return ret;
@@ -535,12 +584,12 @@ public final class Josmans {
                                 && Character.isLowerCase(nextNextCh)) {
                             sb.append(ch);
                             sb.append(" ");
-                            sb.append(Character.toLowerCase(nextCh));                          
+                            sb.append(Character.toLowerCase(nextCh));
                             i += 2;
                             continue;
                         } else {
                             if (Character.isUpperCase(ch)
-                                    && Character.isUpperCase(nextCh)){
+                                    && Character.isUpperCase(nextCh)) {
                                 sb.append(ch);
                                 i += 1;
                                 continue;
@@ -555,8 +604,6 @@ public final class Josmans {
         }
         return sb.toString();
     }
-
-
 
     /**
      * Returns the target file where a source path should be transfered into.

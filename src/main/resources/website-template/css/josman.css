@@ -25,6 +25,7 @@ body {
     background-color: #FFFCEF;
     z-index: 100;
     padding-bottom: 5px;
+    background: linear-gradient(to bottom, #FFFFFF 0%, #F2FAFF 80%, #ACBFD6 180%) repeat scroll 0 0 rgba(0, 0, 0, 0);
 }
 
 
@@ -50,27 +51,38 @@ body {
     min-height:200px; /* just do simulate content */
     z-index: 100;
     background-color:#f5f2ec;
-    //opacity:0.9;
+    background:  linear-gradient(to bottom, #E6F0F8 40%, rgba(255, 237, 123, 0.2) 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
     
 }                     
 
+.josman-sidebar-selected {
+    background: linear-gradient(to bottom, #F2F2EA 0%, #FBFAF7 100%, #ffffff 0%) repeat scroll 0 0 rgba(0, 0, 0, 0)
+}
+
 .josman-sidebar-block {
-    padding: 10px;    
+    padding-top: 10px;    
+    padding-bottom: 10px;    
     word-wrap: break-word;
 }
 .josman-sidebar-block ul {
     list-style-type: none;
-     margin-left: -38px;
+    padding-left: 0px;
+}
+
+.josman-sidebar-block li ul {
+    padding-left: 17px;
 }
 
 .josman-sidebar-page-title {    
     margin-bottom:5px;
      color: black !important;
     font-weight: bold; 
+    padding-left: 7px;
 }
 
 .josman-sidebar-page-title a {    
        color: black !important; // need to replicate from div otherwise doesn't work :-/'
+       
 }
 
 /* 2nd level */

@@ -20,8 +20,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.eclipse.egit.github.core.RepositoryTag;
-import eu.trentorise.opendata.josman.org.pegdown.Parser;
-import eu.trentorise.opendata.josman.org.pegdown.PegDownProcessor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,6 +39,8 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.parboiled.common.ImmutableList;
+import org.pegdown.Parser;
+import org.pegdown.PegDownProcessor;
 
 /**
  * Represents a Josman project, holding information about maven and git repository.

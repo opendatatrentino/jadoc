@@ -8,6 +8,7 @@ May 4th, 2015
 
 - Polished a bit code
 - now inheriting from odt-super-pom
+- switched to proper pegdown maven dependency
 
 ### 0.5.0
 

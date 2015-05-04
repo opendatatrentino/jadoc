@@ -21,4 +21,4 @@ In case updates are available, version numbers follows <a href="http://semver.or
 
 ### Usage
 
-At present the project is quite underdocumented. You can find some examples in [tests](tests.md) page. 
+At present the project is quite underdocumented. You can find some examples in [tests](tests.md) page. Markdown to Html conversion is done by <a href="https://github.com/sirthias/pegdown" target="_blank"> PegDown </a>, and some further tweaks to the generated HTML are done with <a href="http://jodd.org/doc/jerry" target="_blank"> Jerry</a>

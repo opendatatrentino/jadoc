@@ -7,7 +7,21 @@ RELEASE DOCS ARE ON THE <a href="http://opendatatrentino.github.io/josman/" targ
 
 Josman is a Java program to generate documentation for open source projects. 
 
-It's modeled after this workflow, where you:
+
+**Project Status**: still a prototype
+
+**Roadmap**: See [project milestones](../../milestones)
+
+**Usage**: Project is not published yet, so [usage docs](docs) are subject to change. 
+
+**License**: business-friendly [Apache License v2.0](LICENSE.txt)
+
+**Contributing**: see [the wiki](../../wiki)
+
+
+**Main ideas**
+
+Josman is modeled after this workflow, where you:
 
 1. create an open source project on Github
 2. keep docs in source code, in folder `docs/` (i.e. see [josman docs](docs))
@@ -28,16 +42,6 @@ This way we
     * so if you have to patch something or just improve docs, just work in relative `branch-x.y` and then run Josman to publish it (even if it is not released).
     * if you need to add functionality, create new branch named `branch-x.y+1`
 
-
-**Project Status**: still a prototype
-
-**Roadmap**: See [project milestones](../../milestones)
-
-**Usage**: Project is not published yet, so [usage docs](docs) are subject to change. 
-
-**License**: business-friendly [Apache License v2.0](LICENSE.txt)
-
-**Contributing**: see [the wiki](../../wiki)
 
 **Credits**
 

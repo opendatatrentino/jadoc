@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package eu.trentorise.opendata.josman;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -10,7 +5,9 @@ import eu.trentorise.opendata.commons.NotFoundException;
 import eu.trentorise.opendata.commons.OdtUtils;
 import static eu.trentorise.opendata.commons.OdtUtils.checkNotEmpty;
 import eu.trentorise.opendata.commons.SemVersion;
+import static eu.trentorise.opendata.josman.JosmanProject.CHANGES_MD;
 import static eu.trentorise.opendata.josman.JosmanProject.DOCS_FOLDER;
+import static eu.trentorise.opendata.josman.JosmanProject.README_MD;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -18,10 +15,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -31,7 +26,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.eclipse.egit.github.core.Repository;
 import org.eclipse.egit.github.core.RepositoryTag;
 import org.eclipse.egit.github.core.client.GitHubClient;
@@ -62,7 +56,7 @@ public final class Josmans {
      * Fetches all tags from a github repository. Beware of API limits of 60
      * requests per hour
      */
-    public static List<RepositoryTag> fetchTags(String organization, String repoName) {
+    public static ImmutableList<RepositoryTag> fetchTags(String organization, String repoName) {
         OdtUtils.checkNotEmpty(organization, "Invalid organization!");
         OdtUtils.checkNotEmpty(repoName, "Invalid repo name!");
 
@@ -73,7 +67,7 @@ public final class Josmans {
             RepositoryService service = new RepositoryService(client);
             Repository repo = service.getRepository(organization, repoName);
             List<RepositoryTag> tags = service.getTags(repo);
-            return tags;
+            return ImmutableList.copyOf(tags);
         }
         catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -110,7 +104,6 @@ public final class Josmans {
         return version.getMajor() + "." + version.getMinor();
     }
 
-    ;
     
     /**
      * Constructs a SemVersion out of a release tag, like i.e. josman-1.2.3
@@ -121,15 +114,11 @@ public final class Josmans {
     }
 
     /**
-     *
+     * Returns a tag with given major and minor in provided list of git repository tags
      * @param repoName i.e. "josman"
-     * @param major
-     * @param minor
-     * @param tags
      * @throws NotFoundException if tag is not found
-     * @return
      */
-    public static RepositoryTag find(String repoName, int major, int minor, Iterable<RepositoryTag> tags) {
+    static RepositoryTag find(String repoName, int major, int minor, Iterable<RepositoryTag> tags) {
         for (RepositoryTag tag : tags) {
             SemVersion tagVersion = version(repoName, tag.getName());
             if (tagVersion.getMajor() == major
@@ -195,8 +184,8 @@ public final class Josmans {
     static List<String> orderRelpaths(List<String> relpaths) {
         List<String> ret = new ArrayList(relpaths);
         
-        String readme = DOCS_FOLDER + "/" + "README.md";
-        String changes = DOCS_FOLDER + "/" + "CHANGES.md";
+        String readme = DOCS_FOLDER + "/" + README_MD;
+        String changes = DOCS_FOLDER + "/" + CHANGES_MD;
         
         List<String> toSkip = ImmutableList.of(readme, changes);
         
@@ -244,12 +233,12 @@ public final class Josmans {
      *
      * @param repoName the github repository name i.e. josman
      * @param tags a list of tags from the repository
-     * @param versionsToSkip These versions will be filtered in the output.
+     * @param ignoredVersions These versions will be filtered in the output.
      * @return map of version as string and correspondig RepositoryTag
      */
-    public static SortedMap<String, RepositoryTag> versionTagsToProcess(String repoName, List<RepositoryTag> tags, List<SemVersion> versionsToSkip) {
+    public static SortedMap<String, RepositoryTag> versionTagsToProcess(String repoName, List<RepositoryTag> tags, List<SemVersion> ignoredVersions) {
         SortedMap<String, RepositoryTag> map = versionTags(repoName, tags);
-        for (SemVersion versionToSkip : versionsToSkip) {
+        for (SemVersion versionToSkip : ignoredVersions) {
             String tag = releaseTag(repoName, versionToSkip);
             if (map.containsKey(tag)) {
                 map.remove(tag);
@@ -352,8 +341,8 @@ public final class Josmans {
     public static String htmlizePath(String path) {
         checkNotEmpty(path, "Invalid path!");
         String slashPath = path.replace("\\", "/");
-        if (slashPath.endsWith("README.md")) {
-            return slashPath.replace("README.md", "index.html");
+        if (slashPath.endsWith(README_MD)) {
+            return slashPath.replace(README_MD, "index.html");
         } else if (slashPath.endsWith(".md")) {
             return slashPath.substring(0, slashPath.length() - 3) + ".html";
         }
@@ -366,7 +355,7 @@ public final class Josmans {
     }
 
     /**
-     *
+     * Checks if the input string contains only spaces, tabs, etc
      * @return non-null input string
      * @param string
      * @throws IllegalArgumentException on empty string
@@ -393,8 +382,7 @@ public final class Josmans {
 
     /**
      * Fetches Javadoc of released artifact and writes it into {@code destFile}
-     *
-     * @param destFile must exists.
+     *     
      */
     public static File fetchJavadoc(String groupId, String artifactId, SemVersion version) {
         checkNotEmpty(groupId, "Invalid groupId!");
@@ -446,9 +434,21 @@ public final class Josmans {
                 throw new RuntimeException("Couldn't copy the directory!", ex);
             }
         } else {
-            final File jarFile = new File(clazz.getProtectionDomain().getCodeSource().getLocation().getPath());
+            
+            File jarFile = new File(clazz.getProtectionDomain().getCodeSource().getLocation().getPath());
+            if (jarFile.isDirectory() && jarFile.getAbsolutePath().endsWith("target" + File.separator+ "classes")){                
+                LOG.info("Seems like you have Josman sources, will take resources from there");
+                try {
+                    FileUtils.copyDirectory(new File(jarFile.getAbsolutePath() + "/../../src/main/resources", dirPath), destDir);
+                }
+                catch (IOException ex) {
+                    throw new RuntimeException("Couldn't copy the directory!", ex);
+                }                
+            } else {
+                copyDirFromJar(jarFile, destDir, dirPath);
+            }
 
-            copyDirFromJar(jarFile, destDir, dirPath);
+            
 
         }
     }
@@ -546,7 +546,7 @@ public final class Josmans {
     /**
      * Returns the name displayed on the website as menu item for a given page.
      *
-     * @param relPath path relative to the {@link #sourceRepoDir} (i.e.
+     * @param relPath path relative to the {@link JosmanProject#sourceRepoDir()} (i.e.
      * LICENSE.txt or docs/README.md)
      */
     public static String targetName(String relPath) {
@@ -622,7 +622,7 @@ public final class Josmans {
                     pagesDir,
                     Josmans.majorMinor(version)
                     + File.separator
-                    + Josmans.htmlizePath(relPath.substring("docs/".length())));
+                    + Josmans.htmlizePath(relPath.substring((DOCS_FOLDER + "/").length())));
         }
 
     }
@@ -651,9 +651,9 @@ public final class Josmans {
      */
     static boolean isRootpath(String relPath) {
         checkNotNull(relPath);
-        return !(relPath.equals("docs")
-                || relPath.startsWith("docs/")
-                || relPath.startsWith("docs\\"));
+        return !(relPath.equals(DOCS_FOLDER)
+                || relPath.startsWith(DOCS_FOLDER + "/")
+                || relPath.startsWith(DOCS_FOLDER + "\\"));
     }
 
     /**

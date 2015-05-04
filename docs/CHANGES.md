@@ -1,7 +1,16 @@
-JOSMAN Release Notes  -  http://opendatatrentino.github.io/josman
+## JOSMAN Release Notes 
 
-#### 0.5.0
+http://opendatatrentino.github.io/josman
 
-May 1st
+### 0.6.0 
 
-Implemented basic web site generator, but is a super alpha version
+May 4th, 2015
+
+- Polished a bit code
+- now inheriting from odt-super-pom
+
+### 0.5.0
+
+May 1st, 2015
+
+Implemented basic web site generator, but it is a super alpha version

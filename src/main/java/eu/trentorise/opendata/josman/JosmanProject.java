@@ -43,15 +43,21 @@ import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.parboiled.common.ImmutableList;
 
 /**
- *
+ * Represents a Josman project, holding information about maven and git repository.
  * @author David Leoni
  */
 public class JosmanProject {
 
     private static final Logger LOG = Logger.getLogger(JosmanProject.class.getName());
     private static final int DEPTH = 8000;
-
+    
+    /**
+     * Folder in source code where user documentation is held.
+     */
     public static final String DOCS_FOLDER = "docs";
+    
+    public static final String README_MD = "README.md";
+    public static final String CHANGES_MD = "CHANGES.md";
 
     private String repoName;
     private String repoTitle;
@@ -59,17 +65,17 @@ public class JosmanProject {
     private boolean snapshotMode;
     private File sourceRepoDir;
     private File pagesDir;
-    private List<SemVersion> versionsToSkip;
+    private ImmutableList<SemVersion> ignoredVersions;
 
     private Model pom;
     private Repository repo;
 
     /**
-     * Null means they were not fetched. Notice we may also have fetched tags
+     * Null means tags were not fetched. Notice we may also have fetched tags
      * and discovered there where none, so there might also be an empty array.
      */
     @Nullable
-    private List<RepositoryTag> repoTags;
+    private ImmutableList<RepositoryTag> repoTags;
 
     PegDownProcessor pegDownProcessor;
 
@@ -100,7 +106,7 @@ public class JosmanProject {
      *
      * @param snapshotMode if true the website generator will only process the
      * current branch snapshot. Otherwise all released versions except
-     * {@code versionsToSkip} will be processed,
+     * {@code ignoredVersions} will be processed,
      *
      */
     public JosmanProject(
@@ -109,7 +115,7 @@ public class JosmanProject {
             String repoOrganization,
             String sourceRepoDirPath,
             String pagesDirPath,
-            List<SemVersion> versionsToSkip,
+            List<SemVersion> ignoredVersions,
             boolean snapshotMode) {
 
         checkNotEmpty(repoName, "Invalid repository name!");
@@ -117,12 +123,12 @@ public class JosmanProject {
         checkNotEmpty(repoOrganization, "Invalid repository organization!");
         checkNotNull(sourceRepoDirPath, "Invalid repository source docs dir path!");
         checkNotNull(pagesDirPath, "Invalid pages dir path!");
-        checkNotNull(versionsToSkip, "Invalid versions to skip!");
+        checkNotNull(ignoredVersions, "Invalid versions to ignore!");
 
         this.repoName = repoName;
         this.repoTitle = repoTitle;
         this.repoOrganization = repoOrganization;
-        this.versionsToSkip = ImmutableList.copyOf(versionsToSkip);
+        this.ignoredVersions = ImmutableList.copyOf(ignoredVersions);
         if (sourceRepoDirPath.isEmpty()) {
             this.sourceRepoDir = new File("." + File.separator);
         } else {
@@ -145,7 +151,7 @@ public class JosmanProject {
     }
 
     private File sourceDocsDir() {
-        return new File(sourceRepoDir, "docs");
+        return new File(sourceRepoDir, DOCS_FOLDER);
     }
 
     private File targetJavadocDir(SemVersion version) {
@@ -375,7 +381,7 @@ public class JosmanProject {
         // cleaning example versions
         skeleton.$(".josman-version-tab-header").remove();
 
-        List<RepositoryTag> tags = new ArrayList(Josmans.versionTagsToProcess(repoName, repoTags, versionsToSkip).values());
+        List<RepositoryTag> tags = new ArrayList(Josmans.versionTagsToProcess(repoName, repoTags, ignoredVersions).values());
         Collections.reverse(tags);
 
         if (Josmans.isRootpath(relPath)) {
@@ -448,8 +454,8 @@ public class JosmanProject {
 
     private void buildIndex(SemVersion latestVersion) {
         try {
-            File sourceMdFile = new File(sourceRepoDir, "README.md");
-            copyMdAsHtml(new FileInputStream(sourceMdFile), "README.md", latestVersion, ImmutableList.of("README.md"));
+            File sourceMdFile = new File(sourceRepoDir, README_MD);
+            copyMdAsHtml(new FileInputStream(sourceMdFile), README_MD, latestVersion, ImmutableList.of(README_MD));
         }
         catch (FileNotFoundException ex) {
             throw new RuntimeException("Error while building index!", ex);
@@ -561,7 +567,7 @@ public class JosmanProject {
 
             if (relpaths.isEmpty()) {
                 LOG.log(Level.WARNING, "COULDN''T FIND ANY FILE IN " + DOCS_FOLDER + " for version {0}! TRYING TO USE README.md instead", version);
-                path = "README.md";
+                path = README_MD;
             } else {
                 path = DOCS_FOLDER;
             }
@@ -720,7 +726,7 @@ public class JosmanProject {
              LOG.warning("TODO - PROCESSING ONLY CURRENT BRANCH, NEED TO PROCESS ALL BRANCHES INSTEAD!");
              */
 
-            SortedMap<String, RepositoryTag> filteredTags = Josmans.versionTagsToProcess(repoName, repoTags, versionsToSkip);
+            SortedMap<String, RepositoryTag> filteredTags = Josmans.versionTagsToProcess(repoName, repoTags, ignoredVersions);
 
             for (RepositoryTag tag : filteredTags.values()) {
                 LOG.log(Level.INFO, "Processing release tag {0}", tag.getName());
@@ -885,4 +891,10 @@ public class JosmanProject {
         return repoOrganization;
     }
 
+    public ImmutableList<SemVersion> getIgnoredVersions() {
+        return ignoredVersions;
+    }
+
+    
+    
 }

@@ -41,41 +41,13 @@ import org.junit.Test;
 public class GitTest {
 
     private static final Logger LOG = Logger.getLogger(GitTest.class.getName());
-    private static int DEPTH = 8000;
+    private static final int DEPTH = 8000;
 
     @BeforeClass
     public static void beforeClass() {
         OdtConfig.init(GitTest.class);
     }
 
-    // TODO add test methods here.
-    // The methods must be annotated with annotation @Test. For example:
-    //
-    /*@Test
-     public void testJcabi()) throws IOException {
-
-     Github github = new RtGithub();
-     Repo repo = github.repos().get(
-     new Coordinates.Simple("opendatatrentino/odt-commons")
-     );
-     repo.git().commits().
-     for (Release rel : repo.releases().iterate()){
-     System.out.println("release: " + rel);    
-     for (ReleaseAsset asset : rel.assets().iterate()){
-     System.out.println("asset: " + asset);    
-     }
-     }
-        
-     for (Release rel : repo.releases().iterate()){
-     System.out.println("release: " + rel);    
-     for (ReleaseAsset asset : rel.assets().iterate()){
-     System.out.println("asset: " + asset);    
-     }
-     }
-        
-        
-     }
-     */
     @Test
     public void testEgit() throws IOException {
         List<RepositoryTag> tags = Josmans.fetchTags("opendatatrentino", "josman");

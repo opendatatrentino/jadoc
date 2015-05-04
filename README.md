@@ -31,12 +31,6 @@ This way we
 
 **Project Status**: still a prototype
 
-**News**
-
-* Still no news...
-
-social buttons
-
 **Roadmap**: See [project milestones](../../milestones)
 
 **Usage**: Project is not published yet, so [usage docs](docs) are subject to change. 

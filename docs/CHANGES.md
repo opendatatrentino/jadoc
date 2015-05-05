@@ -2,6 +2,12 @@
 
 http://opendatatrentino.github.io/josman
 
+### 0.6.1 
+
+May 5th, 2015
+
+- fixed bug of Josman not finding local javadoc
+
 ### 0.6.0 
 
 May 4th, 2015

@@ -711,20 +711,7 @@ public class JosmanProject {
             LOG.log(Level.INFO, "Processing published version");
             buildIndex(latestPublishedVersion);
             String curBranch = Josmans.readRepoCurrentBranch(sourceRepoDir);
-            /* old processor for current branch
-             SemVersion curBranchVersion = Josmans.versionFromBranchName(curBranch);
-             RepositoryTag releaseTag;
-             try {
-             releaseTag = Josmans.find(repoName, curBranchVersion.getMajor(), curBranchVersion.getMinor(), repoTags);
-             }
-             catch (NotFoundException ex) {
-             throw new RuntimeException("Current branch " + curBranch + " does not correspond to any released version!", ex);
-             }
-             SemVersion tagVersion = Josmans.version(repoName, releaseTag.getName());
-             processDocsDir(tagVersion);
-             createLatestDocsDirectory(tagVersion);
-             LOG.warning("TODO - PROCESSING ONLY CURRENT BRANCH, NEED TO PROCESS ALL BRANCHES INSTEAD!");
-             */
+
 
             SortedMap<String, RepositoryTag> filteredTags = Josmans.versionTagsToProcess(repoName, repoTags, ignoredVersions);
 
@@ -739,14 +726,6 @@ public class JosmanProject {
 
         try {
 
-            /*
-             File userdocImgDir = new File(sourceDocsDir, "img");
-             File targetImgDir = new File(pagesDir, "img");
-             LOG.log(Level.INFO, "Merging img dir: {0}", userdocImgDir.getAbsolutePath());
-             LOG.log(Level.INFO, "        in directory: {0}", targetImgDir.getAbsolutePath());
-
-             FileUtils.copyDirectory(userdocImgDir, targetImgDir);
-             */
             File targetImgDir = new File(pagesDir, "img");
 
             File programLogo = programLogo(sourceDocsDir(), repoName);
@@ -862,7 +841,7 @@ public class JosmanProject {
                     throw new RuntimeException("Error while copying Javadoc from " + sourceJavadoc.getAbsolutePath() + " to " + targetJavadoc.getAbsolutePath(), ex);
                 }
             } else {
-                LOG.info("Couldn't find javadoc, skipping it.");
+                LOG.log(Level.INFO, "Couldn''t find javadoc, skipping it. Looked in {0}", sourceJavadoc.getAbsolutePath());
             }
         } else {
             File jardocs;
@@ -871,7 +850,7 @@ public class JosmanProject {
             }
             catch (Exception ex) {
                 String sep = File.separator;
-                String localJarPath = sourceRepoDir.getAbsolutePath() + sep + "target" + sep + "checkout" + sep + "target" + sep + Josmans.javadocJarName(repoTitle, version);
+                String localJarPath = sourceRepoDir.getAbsolutePath() + sep + "target" + sep + "checkout" + sep + "target" + sep + Josmans.javadocJarName(repoName, version);
                 LOG.log(Level.WARNING, "Error while fetching javadoc from Maven Central, trying to locate it at " + localJarPath, ex);
                 jardocs = new File(localJarPath);
                 if (!jardocs.exists()) {

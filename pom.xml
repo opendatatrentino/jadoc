@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>eu.trentorise.opendata</groupId>
     <artifactId>josman</artifactId>
-    <version>0.6.2-SNAPSHOT</version>
+    <version>0.6.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     
     <name>Josman</name>
@@ -15,7 +15,14 @@
         <artifactId>odt-super-pom</artifactId>
         <version>1.1.0</version>
     </parent>  
-        
+
+    <scm>
+        <url>${project.url}</url>
+        <connection>scm:git:${project.url}.git</connection>
+        <developerConnection>scm:git:${project.url}.git</developerConnection>        
+        <tag>HEAD</tag>
+    </scm>        
+                        
     <build>
         <plugins>
                        

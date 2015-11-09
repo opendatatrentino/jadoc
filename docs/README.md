@@ -19,6 +19,9 @@ Josman is available on Maven Central. To use it, put this in the dependencies se
 
 In case updates are available, version numbers follows <a href="http://semver.org/" target="_blank">semantic versioning</a> rules.
 
+<strong>NOTE: you are  most probably interested in using the <a href="http://opendatatrentino.github.io/josmanmaven-plugin/"> maven plugin of Josman</a>.
+</strong>
+
 ### Usage
 
 At present the project is quite underdocumented. You can find some examples in [tests](tests.md) page. Markdown to Html conversion is done by <a href="https://github.com/sirthias/pegdown" target="_blank"> PegDown </a>, and some further tweaks to the generated HTML are done with <a href="http://jodd.org/doc/jerry" target="_blank"> Jerry</a>

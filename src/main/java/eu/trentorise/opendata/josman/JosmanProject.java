@@ -3,8 +3,8 @@ package eu.trentorise.opendata.josman;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import eu.trentorise.opendata.commons.NotFoundException;
-import eu.trentorise.opendata.commons.OdtUtils;
-import static eu.trentorise.opendata.commons.OdtUtils.checkNotEmpty;
+import eu.trentorise.opendata.commons.TodUtils;
+import static eu.trentorise.opendata.commons.TodUtils.checkNotEmpty;
 import eu.trentorise.opendata.commons.SemVersion;
 import java.io.File;
 import java.io.FileInputStream;
@@ -91,6 +91,7 @@ public class JosmanProject {
                 LOG.info("Found already existing output dir, cleaning it...");
                 try {
                     FileUtils.deleteDirectory(outputVersionDir);
+                    LOG.info("Done cleaning directory.");
                 }
                 catch (Exception ex) {
                     throw new RuntimeException("Error while deleting directory!", ex);
@@ -217,6 +218,7 @@ public class JosmanProject {
             try {
                 FileUtils.copyInputStreamToFile(sourceStream, targetFile);
                 sourceStream.close();
+                LOG.info("Done copying file.");
             }
             catch (Exception ex) {
                 throw new RuntimeException("Error while copying stream to file!", ex);
@@ -328,7 +330,7 @@ public class JosmanProject {
                             return true;
                         }
 
-                        if (OdtUtils.removeTrailingSlash(href).equals(DOCS_FOLDER)) {
+                        if (TodUtils.removeTrailingSlash(href).equals(DOCS_FOLDER)) {
                             arg0.attr("href", Josmans.majorMinor(version) + "/index.html");
                             return true;
                         }
@@ -640,8 +642,14 @@ public class JosmanProject {
             throw new RuntimeException("Trying to delete a latest docs dir which doesn't end with 'latest'!");
         }
         try {
+            LOG.log(Level.INFO, "Deleting directory {0}  ...", targetLatestDocsDir.getAbsolutePath());
             FileUtils.deleteDirectory(targetLatestDocsDir);
+            LOG.log(Level.INFO, "Done deleting directory.");
+            LOG.log(Level.INFO, "Copying files from directory {0} to {1}  ...", 
+                    new Object[]{targetVersionDir(version).getAbsolutePath(),
+                    targetLatestDocsDir.getAbsolutePath()});
             FileUtils.copyDirectory(targetVersionDir(version), targetLatestDocsDir);
+            LOG.log(Level.INFO, "Done copying directory.");
         }
         catch (Throwable tr) {
             throw new RuntimeException("Error while creating latest docs directory ", tr);
@@ -683,17 +691,18 @@ public class JosmanProject {
             throw new RuntimeException("Error while reading local git repo!", ex);
         }
 
-        LOG.log(Level.INFO, "Cleaning target: {0}", pagesDir.getAbsolutePath());
+        LOG.log(Level.INFO, "Cleaning target: {0}  ....", pagesDir.getAbsolutePath());
         if (!pagesDir.getAbsolutePath().endsWith("site")) {
             throw new RuntimeException("target directory does not end with 'site' !");
         }
         try {
             FileUtils.deleteDirectory(pagesDir);
+            LOG.info("Done deleting directory");
         }
         catch (IOException ex) {
             throw new RuntimeException("Error while deleting directory " + pagesDir.getAbsolutePath(), ex);
         }
-
+        
         SemVersion snapshotVersion = SemVersion.of(pom.getVersion()).withPreReleaseVersion("");
 
         if (snapshotMode) {
@@ -834,8 +843,9 @@ public class JosmanProject {
             if (sourceJavadoc.exists()) {
 
                 try {
-                    LOG.log(Level.INFO, "Now copying Javadoc from {0} to {1}", new Object[]{sourceJavadoc.getAbsolutePath(), targetJavadoc.getAbsolutePath()});
+                    LOG.log(Level.INFO, "Now copying Javadoc from {0} to {1} ...", new Object[]{sourceJavadoc.getAbsolutePath(), targetJavadoc.getAbsolutePath()});
                     FileUtils.copyDirectory(sourceJavadoc, targetJavadoc);
+                    LOG.info("Done copying javadoc.");
                 }
                 catch (Exception ex) {
                     throw new RuntimeException("Error while copying Javadoc from " + sourceJavadoc.getAbsolutePath() + " to " + targetJavadoc.getAbsolutePath(), ex);

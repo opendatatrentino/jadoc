@@ -2,8 +2,8 @@ package eu.trentorise.opendata.josman;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import eu.trentorise.opendata.commons.NotFoundException;
-import eu.trentorise.opendata.commons.OdtUtils;
-import static eu.trentorise.opendata.commons.OdtUtils.checkNotEmpty;
+import eu.trentorise.opendata.commons.TodUtils;
+import static eu.trentorise.opendata.commons.validation.Preconditions.checkNotEmpty;
 import eu.trentorise.opendata.commons.SemVersion;
 import static eu.trentorise.opendata.josman.JosmanProject.CHANGES_MD;
 import static eu.trentorise.opendata.josman.JosmanProject.DOCS_FOLDER;
@@ -16,7 +16,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -26,6 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.eclipse.egit.github.core.Repository;
 import org.eclipse.egit.github.core.RepositoryTag;
 import org.eclipse.egit.github.core.client.GitHubClient;
@@ -33,6 +36,8 @@ import org.eclipse.egit.github.core.service.RepositoryService;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.parboiled.common.ImmutableList;
+
+import com.google.common.io.Files;
 
 /**
  * Utilities for Josman
@@ -57,8 +62,8 @@ public final class Josmans {
      * requests per hour
      */
     public static ImmutableList<RepositoryTag> fetchTags(String organization, String repoName) {
-        OdtUtils.checkNotEmpty(organization, "Invalid organization!");
-        OdtUtils.checkNotEmpty(repoName, "Invalid repo name!");
+        TodUtils.checkNotEmpty(organization, "Invalid organization!");
+        TodUtils.checkNotEmpty(repoName, "Invalid repo name!");
 
         LOG.log(Level.FINE, "Fetching {0}/{1} tags.", new Object[]{organization, repoName});
 
@@ -325,7 +330,7 @@ public final class Josmans {
     }
 
     public static SemVersion latestVersion(String repoName, List<RepositoryTag> tags) {
-        OdtUtils.checkNotEmpty(tags, "Invalid repository tags!");
+        TodUtils.checkNotEmpty(tags, "Invalid repository tags!");
         SortedMap<String, RepositoryTag> filteredTags = Josmans.versionTags(repoName, tags);
         if (filteredTags.isEmpty()) {
             throw new NotFoundException("Couldn't find any released version!");
@@ -346,7 +351,7 @@ public final class Josmans {
         } else if (slashPath.endsWith(".md")) {
             return slashPath.substring(0, slashPath.length() - 3) + ".html";
         }
-        String ret = OdtUtils.removeTrailingSlash(slashPath);
+        String ret = TodUtils.removeTrailingSlash(slashPath);
         if (ret.length() == 0) {
             return "/";
         } else {
@@ -361,7 +366,7 @@ public final class Josmans {
      * @throws IllegalArgumentException on empty string
      */
     public static String checkNotMeaningful(@Nullable String string, @Nullable Object prependedErrorMessage) {
-        OdtUtils.checkNotEmpty(string, prependedErrorMessage);
+        TodUtils.checkNotEmpty(string, prependedErrorMessage);
         for (int i = 0; i < string.length(); i++) {
             if (string.charAt(i) != '\n' && string.charAt(i) != '\t' && string.charAt(i) != ' ') {
                 return string;
@@ -409,6 +414,7 @@ public final class Josmans {
         LOG.log(Level.INFO, "Fetching javadoc from {0} into {1} ...", new Object[]{url, destFile.getAbsolutePath()});
         try {
             FileUtils.copyURLToFile(url, destFile, CONNECTION_TIMEOUT, CONNECTION_TIMEOUT);
+            LOG.log(Level.INFO, "Done copying javadoc.");
         }
         catch (IOException ex) {
             throw new RuntimeException("Error while fetch-and-write javadoc for " + groupId + "/" + artifactId + "-" + version + " into file " + destFile.getAbsoluteFile(), ex);
@@ -426,9 +432,10 @@ public final class Josmans {
         File sourceDir = new File("src" + sep + "main" + sep + "resources", dirPath);
 
         if (sourceDir.exists()) {
-            LOG.log(Level.INFO, "Copying directory from {0} to {1}", new Object[]{sourceDir.getAbsolutePath(), destDir.getAbsolutePath()});
+            LOG.log(Level.INFO, "Copying directory from {0} to {1}  ...", new Object[]{sourceDir.getAbsolutePath(), destDir.getAbsolutePath()});
             try {
                 FileUtils.copyDirectory(sourceDir, destDir);
+                LOG.log(Level.INFO, "Done copying directory");
             }
             catch (IOException ex) {
                 throw new RuntimeException("Couldn't copy the directory!", ex);
@@ -440,12 +447,15 @@ public final class Josmans {
                 LOG.info("Seems like you have Josman sources, will take resources from there");
                 try {
                     FileUtils.copyDirectory(new File(jarFile.getAbsolutePath() + "/../../src/main/resources", dirPath), destDir);
+                    LOG.log(Level.INFO, "Done copying directory");
                 }
                 catch (IOException ex) {
                     throw new RuntimeException("Couldn't copy the directory!", ex);
                 }                
             } else {
+                LOG.log(Level.INFO, "Extracting jar {0} to {1}", new Object[]{jarFile.getAbsolutePath(), destDir.getAbsolutePath()});
                 copyDirFromJar(jarFile, destDir, dirPath);
+                LOG.log(Level.INFO, "Done copying directory from JAR.");
             }
 
             
@@ -461,8 +471,8 @@ public final class Josmans {
      * @param dirPath the prefix used for filtering. If empty the whole jar
      * content is extracted.
      */
-    public static void copyDirFromJar(File file, File destDir, String dirPath) {
-        checkNotNull(file);
+    public static void copyDirFromJar(File jarFile, File destDir, String dirPath) {
+        checkNotNull(jarFile);
         checkNotNull(destDir);
         checkNotNull(dirPath);
 
@@ -472,9 +482,9 @@ public final class Josmans {
         } else {
             normalizedDirPath = dirPath;
         }
-
+        
         try {
-            JarFile jar = new JarFile(file);
+            JarFile jar = new JarFile(jarFile);
             java.util.Enumeration enumEntries = jar.entries();
             while (enumEntries.hasMoreElements()) {
                 JarEntry jarEntry = (JarEntry) enumEntries.nextElement();
@@ -495,9 +505,7 @@ public final class Josmans {
 
                     InputStream is = jar.getInputStream(jarEntry); // get the input stream
                     FileOutputStream fos = new FileOutputStream(f);
-                    while (is.available() > 0) {  // write contents of 'is' to 'fos'
-                        fos.write(is.read());
-                    }
+                    IOUtils.copy(is,fos);                    
                     fos.close();
                     is.close();
                 }
@@ -505,7 +513,7 @@ public final class Josmans {
             }
         }
         catch (Exception ex) {
-            throw new RuntimeException("Error while extracting jar file! Jar source: " + file.getAbsolutePath() + " destDir = " + destDir.getAbsolutePath(), ex);
+            throw new RuntimeException("Error while extracting jar file! Jar source: " + jarFile.getAbsolutePath() + " destDir = " + destDir.getAbsolutePath(), ex);
         }
     }
 

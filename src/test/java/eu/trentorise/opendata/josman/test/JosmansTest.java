@@ -1,6 +1,6 @@
 package eu.trentorise.opendata.josman.test;
 
-import eu.trentorise.opendata.commons.OdtConfig;
+import eu.trentorise.opendata.commons.TodConfig;
 import eu.trentorise.opendata.josman.Josmans;
 import java.util.logging.Logger;
 import org.junit.Assert;
@@ -18,7 +18,7 @@ public class JosmansTest {
 
     @BeforeClass
     public static void beforeClass() {
-        OdtConfig.init(JosmansTest.class);
+        TodConfig.init(JosmansTest.class);
     }
 
     @Test

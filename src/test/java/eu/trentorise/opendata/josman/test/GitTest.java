@@ -2,8 +2,8 @@ package eu.trentorise.opendata.josman.test;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableList;
-import eu.trentorise.opendata.commons.OdtConfig;
-import static eu.trentorise.opendata.commons.OdtUtils.checkNotEmpty;
+import eu.trentorise.opendata.commons.TodConfig;
+import static eu.trentorise.opendata.commons.TodUtils.checkNotEmpty;
 import eu.trentorise.opendata.josman.Josmans;
 import java.io.File;
 import java.io.IOException;
@@ -45,7 +45,7 @@ public class GitTest {
 
     @BeforeClass
     public static void beforeClass() {
-        OdtConfig.init(GitTest.class);
+        TodConfig.init(GitTest.class);
     }
 
     @Test

@@ -1,6 +1,6 @@
 package eu.trentorise.opendata.josman.test;
 
-import eu.trentorise.opendata.commons.OdtConfig;
+import eu.trentorise.opendata.commons.TodConfig;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -21,7 +21,7 @@ public class ReadPomTest {
 
     @BeforeClass
     public static void beforeClass() {
-        OdtConfig.init(ReadPomTest.class);
+        TodConfig.init(ReadPomTest.class);
     }  
     
     @Test

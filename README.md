@@ -1,6 +1,6 @@
 <p class="josman-to-strip">
-WARNING: THIS IS ONLY A TEMPLATE FOR THE DOCUMENTATION. <br/>
-RELEASE DOCS ARE ON THE <a href="http://opendatatrentino.github.io/josman/" target="_blank">PROJECT WEBSITE</a>
+WARNING: THIS PROJECT AS OF v0.8.0 HAS BEEN MERGED INTO [JOSMAN-MAVEN-PLUGIN](https://github.com/opendatatrentino/josman-maven-plugin) project. FOR OLDER VERSIONS OF JOSMAN, SEE 
+<a href="http://opendatatrentino.github.io/josman/" target="_blank">PROJECT WEBSITE</a></a>
 </p>
 
 **About**

@@ -19,7 +19,7 @@ Josman is available on Maven Central. To use it, put this in the dependencies se
 
 In case updates are available, version numbers follows <a href="http://semver.org/" target="_blank">semantic versioning</a> rules.
 
-<strong>NOTE: you are  most probably interested in using the <a href="http://opendatatrentino.github.io/josmanmaven-plugin/"> maven plugin of Josman</a>.
+<strong>NOTE: you are  most probably interested in using the <a href="http://opendatatrentino.github.io/josman-maven-plugin/" target="_blank"> maven plugin of Josman</a>.
 </strong>
 
 ### Usage
